@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLEV - 프리미엄 유리창 청소</title>
+    <!-- Fonts -->
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Great+Vibes&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', 'sans-serif'],
+                        brand: ['Outfit', 'sans-serif'],
+                        slogan: ['Great Vibes', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Font -->
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+        }
+    </style>
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+            (function () {
+                // 이메일 알림 초기화
+                emailjs.init("ls9spIe-tj2uDiSrj");
+            })();
+    </script>
+</head>
+
+<body class="bg-white text-gray-800 antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Icons
+        const MenuIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M11 18h9" />
+            </svg>
+        );
+
+        const CheckCircleIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const SparklesIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+        );
+
+        const HomeIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+        );
+
+        const BuildingIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+        );
+
+        const ShieldCheckIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        );
+
+        // Lead Storage Utility
+        const LeadStorage = {
+            SAVE_KEY: 'clev_leads_data',
+            getLeads: () => {
+                const data = localStorage.getItem(LeadStorage.SAVE_KEY);
+                return data ? JSON.parse(data) : [];
+            },
+            saveLead: (lead) => {
+                const leads = LeadStorage.getLeads();
+                const newLead = {
+                    ...lead,
+                    id: Date.now(),
+                    date: new Date().toLocaleString('ko-KR'),
+                    status: '신규'
+                };
+                leads.unshift(newLead);
+                localStorage.setItem(LeadStorage.SAVE_KEY, JSON.stringify(leads));
+                return newLead;
+            },
+            deleteLead: (id) => {
+                const leads = LeadStorage.getLeads();
+                const filtered = leads.filter(l => l.id !== id);
+                localStorage.setItem(LeadStorage.SAVE_KEY, JSON.stringify(filtered));
+            },
+            updateStatus: (id, status) => {
+                const leads = LeadStorage.getLeads();
+                const updated = leads.map(l => l.id === id ? { ...l, status } : l);
+                localStorage.setItem(LeadStorage.SAVE_KEY, JSON.stringify(updated));
+            }
+        };
+
+        const SuccessModal = ({ isOpen, onClose }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <CheckCircleIcon className="w-12 h-12 text-brand-600" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">접수 완료!</h3>
+                        <p className="text-gray-600 mb-8 leading-relaxed">
+                            정상적으로 접수되었습니다.<br />
+                            확인 후 곧 연락드리겠습니다.
+                        </p>
+                        <button
+                            onClick={onClose}
+                            className="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 transition-colors shadow-lg"
+                        >
+                            확인
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminDashboard = ({ onBack }) => {
+            const [leads, setLeads] = React.useState(LeadStorage.getLeads());
+
+            const handleDelete = (id) => {
+                if (confirm('정말 삭제하시겠습니까?')) {
+                    LeadStorage.deleteLead(id);
+                    setLeads(LeadStorage.getLeads());
+                }
+            };
+
+            const handleStatusChange = (id, status) => {
+                LeadStorage.updateStatus(id, status);
+                setLeads(LeadStorage.getLeads());
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h1 className="text-3xl font-black text-gray-900">CLEV 관리자 모드</h1>
+                                <p className="text-gray-500">총 {leads.length}건의 견적 신청이 있습니다.</p>
+                            </div>
+                            <button
+                                onClick={onBack}
+                                className="px-6 py-2 bg-gray-900 text-white rounded-full font-bold hover:bg-gray-800"
+                            >
+                                사이트로 복귀
+                            </button>
+                        </div>
+
+                        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-gray-50 border-b border-gray-100">
+                                            <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">날짜</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">성함</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">연락처</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">문의내용</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">상태</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {leads.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="px-6 py-20 text-center text-gray-400">접수된 내역이 없습니다.</td>
+                                            </tr>
+                                        ) : (
+                                            leads.map(lead => (
+                                                <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="px-6 py-4 text-sm text-gray-500">{lead.date}</td>
+                                                    <td className="px-6 py-4 text-sm font-bold text-gray-900">{lead.name}</td>
+                                                    <td className="px-6 py-4 text-sm text-gray-700">{lead.phone}</td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600 max-w-md break-all">{lead.message}</td>
+                                                    <td className="px-6 py-4">
+                                                        <select
+                                                            value={lead.status}
+                                                            onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                                                            className={`text-xs font-bold px-2 py-1 rounded-full outline-none border-none ${lead.status === '신규' ? 'bg-blue-100 text-blue-600' :
+                                                                lead.status === '상담완료' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                                                                }`}
+                                                        >
+                                                            <option value="신규">신규</option>
+                                                            <option value="상담중">상담중</option>
+                                                            <option value="상담완료">상담완료</option>
+                                                        </select>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <button
+                                                            onClick={() => handleDelete(lead.id)}
+                                                            className="text-red-400 hover:text-red-600 text-xs font-bold"
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Components
+        // Initialize AOS in Header or App
+        const Header = ({ onLogoClick }) => {
+            const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+            const [scrolled, setScrolled] = React.useState(false);
+            const [logoClicks, setLogoClicks] = React.useState(0);
+
+            React.useEffect(() => {
+                AOS.init({
+                    once: true,
+                    offset: 50,
+                    duration: 800,
+                    easing: 'ease-out-cubic',
+                });
+
+                const handleScroll = () => {
+                    setScrolled(window.scrollY > 20);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+            // ... rest of Header code ... (abbreviated for tool call, will use multi-replace or careful targeting in real scenario. 
+            // Since this is replace_file_content, I need to provide the EXACT content for the range.
+            // I will target specific sections one by one or larger chunks if possible.
+            // Wait, replace_file_content for large file with many edits is risky. 
+            // I will use multi_replace for the attributes injection to be safe and cleaner.)
+
+            // Actually, I'll switch to multi_replace_file_content in the Next Step for the attributes injection.
+            // For now, let's just update the Header to init AOS.
+
+            const handleLogoClick = () => {
+                const newClicks = logoClicks + 1;
+                if (newClicks >= 5) {
+                    onLogoClick();
+                    setLogoClicks(0);
+                } else {
+                    setLogoClicks(newClicks);
+                    // Scroll to top on single click
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            };
+
+            return (
+                <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg py-0' : 'bg-white/80 backdrop-blur-sm py-2'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-16">
+                            <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={handleLogoClick}>
+                                <img
+                                    src="./assets/logo.png"
+                                    alt="CLEV 로고"
+                                    className="h-10 w-auto"
+                                />
+                            </div>
+                            <div className="hidden md:flex items-center space-x-4">
+                                <a href="#services" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">서비스 소개</a>
+                                <a href="#portfolio" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">포트폴리오</a>
+                                <a href="#reviews" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">고객 후기</a>
+                                <a href="#calculator" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors white-space-nowrap">견적 계산기</a>
+                                <a href="#contact" className="px-6 py-2 bg-brand-600 text-white rounded-full font-bold hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap border-2 border-brand-600 min-w-[160px] text-center">
+                                    무료 견적 신청하기
+                                </a>
+                            </div>
+                            <div className="md:hidden flex items-center">
+                                <button
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="text-gray-600 hover:text-gray-900 focus:outline-none"
+                                >
+                                    <MenuIcon />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile Menu */}
+                    {isMenuOpen && (
+                        <div className="md:hidden bg-white border-t border-gray-100 animate-in slide-in-from-top duration-300">
+                            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                                <a href="#services" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">서비스 소개</a>
+                                <a href="#portfolio" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">포트폴리오</a>
+                                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">고객 후기</a>
+                                <a href="#calculator" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">견적 계산기</a>
+                                <a href="#contact" onClick={() => setIsMenuOpen(false)} className="block w-full text-left px-3 py-2 rounded-md text-base font-bold bg-brand-50 text-brand-600 hover:bg-brand-100">무료 견적 신청하기</a>
+                            </div>
+                            <div className="px-4 py-4 border-t border-gray-100 bg-gray-50">
+                                <p className="text-sm text-gray-600 text-center">
+                                    <span className="font-bold text-brand-600">상담 가능 시간</span><br />
+                                    08:00 ~ 22:00
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </header>
+            );
+        };
+
+        const Hero = () => {
+            return (
+                <section id="home" className="relative pt-24 pb-20 lg:pt-32 lg:pb-28 bg-gradient-to-br from-brand-50 via-white to-white overflow-hidden min-h-screen flex items-center justify-center">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative w-full">
+                        <div className="text-center max-w-3xl mx-auto">
+                            <div
+                                data-aos="fade-down"
+                                data-aos-duration="1000"
+                                className="inline-flex items-center px-6 py-2 rounded-full bg-white text-brand-700 font-bold mb-8 border border-brand-100 shadow-sm"
+                            >
+                                <span className="font-slogan text-xl sm:text-2xl lowercase mr-3 leading-none pb-1">Clear the Blur</span>
+                                <span className="text-xs tracking-widest opacity-60">흐릿함을 선명하게</span>
+                            </div>
+                            <h1
+                                data-aos="fade-up"
+                                data-aos-delay="200"
+                                data-aos-duration="1000"
+                                className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl mb-6"
+                            >
+                                세상을 더 <span className="text-brand-600">투명하게</span>,<br />
+                                당신의 시야를 <span className="text-brand-600">선명하게</span>
+                            </h1>
+                            <p
+                                data-aos="fade-up"
+                                data-aos-delay="400"
+                                data-aos-duration="1000"
+                                className="mt-4 max-w-2xl mx-auto text-xl text-gray-500 mb-10"
+                            >
+                                클레브[CLEV]는 상가·오피스 전문 유리창 청소 업체입니다.<br className="hidden sm:block" />
+                                매장의 첫인상, 깨끗한 유리창에서 시작됩니다.
+                            </p>
+                            <div
+                                data-aos="fade-up"
+                                data-aos-delay="600"
+                                data-aos-duration="1000"
+                                class="flex flex-wrap justify-center gap-2 w-full max-w-6xl mx-auto mt-10"
+                            >
+
+                                <a href="#services" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                    서비스 소개
+                                </a>
+
+                                <a href="#portfolio" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                    포트폴리오
+                                </a>
+
+                                <a href="#reviews" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                    고객 후기
+                                </a>
+
+                                <a href="#calculator" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                    견적 계산기
+                                </a>
+
+                                <a href="#contact" class="min-w-[130px] flex items-center justify-center py-4 px-6 bg-[#2563eb] text-white rounded-full text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+                                    무료 견적 신청
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Abstract Blue Decoration */}
+                    <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-brand-100 opacity-50 blur-3xl z-[-1]"></div>
+                    <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-50 opacity-50 blur-3xl z-[-1]"></div>
+
+                    {/* Scroll Indicator */}
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer opacity-50 hover:opacity-100 transition-opacity" onClick={() => document.getElementById('about').scrollIntoView({ behavior: 'smooth' })}>
+                        <svg className="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
+                    </div>
+                </section>
+            );
+        };
+
+        const BrandStory = () => {
+            return (
+                <section id="about" data-aos="fade-up" className="py-20 bg-white relative overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                        <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+                            <div className="mb-10 lg:mb-0" data-aos="fade-right">
+                                <h2 className="text-base text-brand-600 font-semibold tracking-wide uppercase mb-2">Brand Story</h2>
+                                <h3 className="text-3xl font-extrabold text-gray-900 sm:text-4xl mb-6 leading-tight break-keep">
+                                    누군가에게 <span className="text-brand-600">선물</span>하고 싶은 빛나는 일상,<br />
+                                    <span className="text-brand-600">클레브[CLEV]</span>가 만듭니다.
+                                </h3>
+                                <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
+                                    <p>
+                                        어깨 수술 후 통증 때문에 직접 유리창을 닦지 못해 흐린 창을 보며 답답해하시던 카페 사장님이 계셨습니다.
+                                        정성 들여 꼼꼼하게 작업을 진행하고 돌아온 날 저녁, 따뜻하고 특별한 글이 도착했습니다.<br />
+                                        <strong>"선물 같은 하루를 만들어 주셔서 감사합니다."</strong>
+                                    </p>
+                                    <p>
+                                        저는 그때 깨달았습니다. 제가 닦는 것은 단순한 유리가 아니라,
+                                        누군가의 <strong>'답답했던 마음'</strong>이자 <strong>'공간의 자부심'</strong>이라는 것을요.
+                                    </p>
+                                    <p>
+                                        일전에 저에게 관리를 받으셨던 한 카페 사장님께서 연락을 주셨습니다.<br />
+                                        확장 이전을 앞둔 친한 친구분에게 가장 특별한 선물을 해주고 싶다며, 매장 유리창 케어를 대신 의뢰하신 것입니다.
+                                    </p>
+                                    <p>
+                                        의뢰를 주신 사장님께서는 이렇게 말씀하셨습니다.<br />
+                                        <strong>"대표님은 그냥 유리 청소가 아니라, 감동을 주는 유리 청소예요."</strong>
+                                    </p>
+                                    <p>
+                                        <strong>왜 '클레브[CLEV]'인가</strong><br />
+                                        이런 과분한 칭찬은 저를 더 치열하게 고민하게 만들었습니다.<br />
+                                        누군가의 소중한 선물이 되기 위해서는 마음만으로는 부족했기 때문입니다.
+                                    </p>
+                                    <p className="mb-4">
+                                        완벽한 <strong>깨끗함(Clean)</strong>으로 사장님의 아픈 어깨를 대신하고, 친구를 향한 그 소중한 마음을 결과로 증명하기 위해서는 누구보다 <strong>영리하게(Clever)</strong> 문제를 해결하는 전문가가 되어야만 했습니다.<br />
+                                        그래서 저는 이 두 가지 약속을 담아 <strong>클레브[CLEV]</strong>라는 이름을 지었습니다.
+                                    </p>
+                                    <p className="font-semibold text-brand-700 pt-4 break-keep leading-relaxed text-base sm:text-lg">
+                                        소중한 마음이 헛되지 않도록 확실한 기술로 보답하겠습니다.<br />
+                                        당신의 진심이 담긴 공간을 늘 맑고 선명하게 비추겠습니다.
+                                    </p>
+                                    <div className="pt-8 relative">
+                                        <div className="absolute top-0 left-0 w-12 h-1 bg-brand-600/20"></div>
+                                        <p className="font-slogan text-4xl text-brand-600/20 leading-none mb-2">Clear the Blur</p>
+                                        <p className="text-xl font-bold text-brand-600 mb-1">흐릿함을 선명하게</p>
+                                        <p className="text-sm font-medium text-gray-400 tracking-widest uppercase">Premium Glass Care [CLEV]</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="relative mt-12 lg:mt-0" data-aos="fade-left">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="aspect-w-3 aspect-h-4 rounded-2xl shadow-lg overflow-hidden bg-gray-100 transform translate-y-4 relative group">
+                                        <img
+                                            src="./assets/cafe_owner_work.jpg"
+                                            alt="작업 중인 모습"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+                                            <span className="text-white text-[13px] font-medium leading-snug break-keep">
+                                                사장님께서 만족을 담아<br />직접 촬영해주신 작업 모습
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="aspect-w-3 aspect-h-4 rounded-2xl shadow-lg overflow-hidden bg-gray-100 transform -translate-y-4 relative group">
+                                        <img
+                                            src="./assets/cafe_owner_after.jpg"
+                                            alt="실제 클레브 케어 후 카페 내부 전경"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 brightness-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+                                            <span className="text-white text-[13px] font-medium leading-snug break-keep">
+                                                케어 후 카페 내부에서 바라본<br />맑고 선명한 거리 전경
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Decorative elements */}
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+                                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Features = () => {
+            const features = [
+                {
+                    title: "전문 장비 사용",
+                    desc: (
+                        <>
+                            유리창에 글로시한<br className="hidden sm:block" /> 광택감을 더해주는 EU 에코 라벨 인증 독일 친환경 전문 세정제와 전문 장비를 사용합니다.
+                        </>
+                    ),
+                    icon: (
+                        <div className="absolute -right-8 -bottom-8 w-48 h-48 rounded-full overflow-hidden shadow-xl mix-blend-multiply border-4 border-white/50 group-hover:scale-105 transition-transform duration-500">
+                            <img src="./assets/professional_detergents.jpg" alt="전문 세정제" className="w-full h-full object-cover" />
+                        </div>
+                    )
+                },
+                {
+                    title: "완벽한 마무리",
+                    desc: "꼼꼼한 유리창 케어와 디테일링 작업으로 마무리.",
+                    icon: (
+                        <div className="absolute -right-8 -bottom-8 w-48 h-48 rounded-full overflow-hidden shadow-xl mix-blend-multiply border-4 border-white/50 group-hover:scale-105 transition-transform duration-500">
+                            <img src="./assets/perfect_finish.jpg" alt="디테일링 작업" className="w-full h-full object-cover" />
+                        </div>
+                    )
+                },
+                {
+                    title: "합리적인 가격",
+                    desc: "투명한 견적 시스템으로 고객님께 최적의 가격을 제안합니다.",
+                    icon: (
+                        <div className="absolute -right-8 -bottom-8 w-48 h-48 rounded-full overflow-hidden shadow-xl mix-blend-multiply border-4 border-white/50 group-hover:scale-105 transition-transform duration-500">
+                            <img src="./assets/reasonable_price.jpg" alt="견적 상담" className="w-full h-full object-cover brightness-110" />
+                        </div>
+                    )
+                }
+            ];
+
+            return (
+                <section id="about" data-aos="fade-up" className="py-20 bg-white">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className="text-base text-brand-600 font-semibold tracking-wide uppercase">Why CLEV?</h2>
+                            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                                클레브만의 특별한 약속
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                            {features.map((feature, idx) => (
+                                <div key={idx} className="relative p-8 bg-brand-50/50 rounded-2xl border border-brand-100 hover:shadow-lg transition-shadow overflow-hidden group pr-8 sm:pr-56 flex flex-col justify-center min-h-[280px]">
+                                    <h3 className="relative z-10 text-xl font-bold text-gray-900 mb-3 break-keep">{feature.title}</h3>
+                                    <p className="relative z-10 text-gray-600 leading-relaxed break-keep">
+                                        {feature.desc}
+                                    </p>
+                                    {feature.icon}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Services = () => {
+            const services = [
+                {
+                    title: "로드샵/매장",
+                    desc: "고객의 발길을 머물게 하는 깨끗한 쇼윈도. 카페, 식당 등 1층 로드샵부터 고층 매장까지 맞춤형 전문 케어.",
+                    price: "현장 방문 무료 견적",
+                    tags: ["쇼윈도", "시트지 제거", "오염 및 물때 제거"],
+                    image: "./assets/service_shop.png"
+                },
+                {
+                    title: "사무실/오피스",
+                    desc: "업무 효율을 높이는 쾌적한 오피스 뷰. 회의실 파티션 및 사무실 내/외부 창문 전문 케어.",
+                    price: "현장 방문 무료 견적",
+                    tags: ["유리 파티션", "회의실 통창", "특수 오염 제거"],
+                    image: "./assets/service_office.jpg"
+                },
+                {
+                    title: "유리 청소 정기 관리",
+                    desc: "항상 깨끗한 매장 상태를 유지하고 싶으신가요? 1개월 1회(권장) 또는 2개월 1회(인기) 방문 케어.",
+                    price: "회차별 할인 적용",
+                    tags: ["1개월 1회 (가장 깨끗함)", "2개월 1회 (비용 절약)", "멤버십 케어"],
+                    image: "./assets/service_regular.jpg"
+                }
+            ];
+
+            return (
+                <section id="services" data-aos="fade-up" className="py-20 bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16" data-aos="fade-up">
+                            <h2 className="text-base text-brand-600 font-semibold tracking-wide uppercase">Services</h2>
+                            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                                상가 & 오피스 전문 클리닝
+                            </p>
+                        </div>
+                        <div className="grid gap-8 lg:grid-cols-3">
+                            {services.map((service, idx) => (
+                                <div key={idx} data-aos="fade-up" data-aos-delay={idx * 100} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col relative group">
+                                    <div className="p-8 flex-1 relative z-10">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-2xl font-bold text-gray-900">{service.title}</h3>
+                                            <span className="bg-brand-100 text-brand-800 text-xs px-3 py-1 rounded-full font-semibold">BEST</span>
+                                        </div>
+                                        <p className="text-gray-600 mb-6 min-h-[3rem] pr-20 break-keep">{service.desc}</p>
+                                        <div className="space-y-2">
+                                            {service.tags.map((tag, tIdx) => (
+                                                <div key={tIdx} className="flex items-center text-sm text-gray-500">
+                                                    <CheckCircleIcon className="w-4 h-4 text-brand-500 mr-2 flex-shrink-0" />
+                                                    {tag}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="p-6 bg-gray-50 border-t border-gray-100 mt-auto relative z-10">
+                                        <p className="text-sm text-gray-500 mb-3 font-medium">예상 비용</p>
+                                        <p className="text-xl font-bold text-gray-900">{service.price}</p>
+                                    </div>
+
+                                    {/* Circular Image Overlay */}
+                                    <div className="absolute bottom-16 right-[-3rem] w-52 h-52 rounded-full border-4 border-white shadow-lg overflow-hidden opacity-90 group-hover:scale-110 transition-transform duration-500 hidden sm:block">
+                                        <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="absolute bottom-24 right-4 w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden opacity-90 sm:hidden">
+                                        <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Portfolio = () => {
+            const [sliderPos, setSliderPos] = React.useState(50);
+            const [activeTab, setActiveTab] = React.useState(0);
+
+            const comparisons = [
+                {
+                    id: 0,
+                    label: '카페 쇼윈도',
+                    description: <>석회질 물때 제거<br />(연마제 폴리싱 작업)</>,
+                    before: './assets/compare_cafe_before.jpg',
+                    after: './assets/compare_cafe_after.jpg'
+                },
+                {
+                    id: 1,
+                    label: '식당 외부 유리',
+                    description: <>동일 시간 유리 청소 작업 공간과<br />작업 전 공간의 비교</>,
+                    before: 'C:/Users/user/.gemini/antigravity/brain/6d6e6bc4-4ee2-42ef-bd88-76ec25053d66/uploaded_image_0_1766841042741.jpg',
+                    after: 'C:/Users/user/.gemini/antigravity/brain/6d6e6bc4-4ee2-42ef-bd88-76ec25053d66/uploaded_image_1_1766841042741.jpg',
+                    beforeStyle: { transform: 'rotate(-1.2deg) scale(1.05)' },
+                    afterStyle: { transform: 'rotate(0.8deg) scale(1.05)' }
+                },
+                {
+                    id: 2,
+                    label: '의류매장 쇼윈도',
+                    description: <>유리창 거미줄과<br />물때 제거</>,
+                    before: './assets/compare_clothes_before.jpg',
+                    after: './assets/compare_clothes_after.jpg'
+                }
+            ];
+
+            const items = [
+                { id: 1, tag: '공공기관', img: './assets/portfolio_gov.jpg', title: '지자체 의뢰 체육시설 유리 청소' },
+                { id: 2, tag: '금융기관', img: './assets/portfolio_bank.jpg', title: <>지역농협 유리 청소 &<br />ATM기 녹 제거</> },
+                { id: 3, tag: '매장', img: './assets/portfolio_shop.jpg', title: '전주 의류 매장 유리 청소' },
+                { id: 4, tag: '정기관리', img: './assets/portfolio_regular.jpg', title: <>광주광역시 무인 매장 유리창<br />정기 관리</> },
+            ];
+
+            return (
+                <section id="portfolio" data-aos="fade-up" className="py-24 bg-white">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-10 px-4">
+                            <h2 className="text-base text-brand-600 font-bold tracking-widest uppercase mb-3">Portfolio</h2>
+                            <h3 className="text-3xl sm:text-5xl font-extrabold text-gray-900 tracking-tight mb-5 leading-tight">
+                                숫자보다 <span className="text-brand-600">결과</span>로 증명합니다
+                            </h3>
+                            <p className="text-lg sm:text-2xl text-gray-500 font-medium break-keep">
+                                클레브가 다녀간 빛나는 현장들
+                            </p>
+                        </div>
+
+                        {/* Case Tabs (Bookmarks) */}
+                        <div className="flex justify-center mb-12 gap-2 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                            {comparisons.map((comp) => (
+                                <button
+                                    key={comp.id}
+                                    onClick={() => setActiveTab(comp.id)}
+                                    className={`px-6 py-3 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap shadow-sm border ${activeTab === comp.id
+                                        ? 'bg-brand-600 text-white border-brand-600 ring-4 ring-brand-100 transform scale-105'
+                                        : 'bg-white text-gray-500 border-gray-100 hover:border-brand-300 hover:text-brand-600'
+                                        }`}
+                                >
+                                    {comp.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Featured Case: Before/After Slider */}
+                        <div className="mb-24 max-w-5xl mx-auto">
+                            <div className="relative h-[300px] sm:h-[450px] rounded-3xl overflow-hidden shadow-2xl group border border-gray-100 mb-6">
+                                <div className="absolute inset-0 w-full h-full">
+                                    <div
+                                        className="absolute inset-0 z-0 transition-opacity duration-500 ease-in-out"
+                                        style={{ clipPath: `inset(0 0 0 ${sliderPos}%)` }}
+                                    >
+                                        <img
+                                            src={comparisons[activeTab].after}
+                                            className="w-full h-full object-cover"
+                                            style={comparisons[activeTab].afterStyle || {}}
+                                            alt=""
+                                        />
+                                        <div className="absolute top-6 right-6 bg-brand-600 text-white px-5 py-2 rounded-full text-[10px] sm:text-xs font-bold shadow-xl">After</div>
+                                    </div>
+
+                                    {/* Before Image Layer (Left Side) */}
+                                    <div
+                                        className="absolute inset-0 z-10 transition-opacity duration-500 ease-in-out"
+                                        style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
+                                    >
+                                        <img
+                                            src={comparisons[activeTab].before}
+                                            className="w-full h-full object-cover grayscale-[0.3] brightness-[0.9] blur-[0.5px]"
+                                            style={comparisons[activeTab].beforeStyle || {}}
+                                            alt=""
+                                        />
+                                        <div className="absolute top-6 left-6 bg-gray-900 text-white px-5 py-2 rounded-full text-[10px] sm:text-xs font-bold shadow-xl">Before</div>
+                                    </div>
+
+                                    {/* Slider Handle */}
+                                    <div className="absolute inset-y-0 w-1.5 bg-white cursor-ew-resize flex items-center justify-center transform -translate-x-1/2 shadow-[0_0_20px_rgba(0,0,0,0.5)] z-20" style={{ left: `${sliderPos}%` }}>
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-2xl flex items-center justify-center -ml-0.5 border-[4px] sm:border-[6px] border-brand-500 hover:scale-110 transition-transform">
+                                            <svg className="w-6 h-6 sm:w-7 sm:h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M8 7l-4 4m0 0l4 4m-4-4h18m-4-4l4 4m0 0l-4 4" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    {/* Interaction Layer */}
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={sliderPos}
+                                        onChange={(e) => setSliderPos(e.target.value)}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30"
+                                    />
+                                </div>
+                            </div>
+                            <div className="px-2 text-center">
+                                <div className="flex flex-col items-center mb-2">
+                                    <span className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2 px-3 py-1 bg-brand-50 rounded-full">Case Brief</span>
+                                    <p className="text-lg sm:text-2xl text-gray-800 leading-relaxed break-keep font-bold">
+                                        {comparisons[activeTab].description}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Work Gallery */}
+                        <div className="mt-20">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="h-px flex-1 bg-gray-100 text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <span className="text-sm font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">More Records</span>
+                                <div className="h-px flex-1 bg-gray-100"></div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-aos="fade-up" data-aos-delay="200">
+                                {items.map((item) => (
+                                    <div key={item.id} className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-lg group">
+                                        <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-6">
+                                            <span className="bg-brand-500 text-white text-[10px] font-bold px-2 py-1 rounded inline-block mb-2 uppercase tracking-wider">{item.tag}</span>
+                                            <h4 className="text-white font-bold text-lg leading-snug break-keep">{item.title}</h4>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-16 text-center">
+                            <a
+                                href="https://blog.naver.com/toryclean"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-10 py-4 bg-gray-900 text-white text-lg font-bold rounded-full hover:bg-brand-600 hover:shadow-2xl transition-all duration-300 group"
+                            >
+                                클레브의 더 많은 작업 일지 보기
+                                <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const CustomerReviews = () => {
+            const reviews = [
+                {
+                    text: "감사합니다!! 너무 만족스러워요",
+                    author: "광주광역시 무인매장"
+                },
+                {
+                    text: "선물 같은 하루를 만들어 주셔서 진심으로 감사드립니다! 다음에 또 뵐께요^^",
+                    author: "정읍 시기동 카페"
+                },
+                {
+                    text: "감사합니다! 주변에도 홍보해드릴께영 항상만족입니당 👍",
+                    author: "정읍 첨단로 프랜차이즈 매장"
+                },
+                {
+                    text: "친구 가게 오픈하는데요. 한번 시간되시면 봐주시고 가셔도 될까요? 친구 가게 이전으로 클린 문의 받고 싶어서요. 제가 해주고 싶어서요^^",
+                    author: "전주 완산구 카페"
+                }
+            ];
+
+            return (
+                <section id="reviews" data-aos="fade-up" className="py-24 bg-gray-50 overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className="text-base text-brand-600 font-bold tracking-widest uppercase mb-3">Happy Customers</h2>
+                            <h3 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-5 leading-tight">
+                                클레브와 함께한 고객님들의 <span className="text-brand-600">실제 후기</span>
+                            </h3>
+                            <p className="text-gray-500 font-medium">진심을 담은 서비스는 결과로 나타납니다.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                            {reviews.map((review, idx) => (
+                                <div key={idx} className="bg-white p-8 rounded-3xl shadow-xl shadow-brand-500/5 border border-gray-100 flex flex-col h-full relative group hover:-translate-y-2 transition-transform duration-300">
+                                    <div className="absolute top-0 right-8 -translate-y-1/2">
+                                        <div className="bg-brand-600 text-white p-3 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H16.017C15.4647 8 15.017 8.44772 15.017 9V12C15.017 12.5523 14.5693 13 14.017 13H13.017V21H14.017ZM6.017 21L6.017 18C6.017 16.8954 6.91243 16 8.017 16H11.017C11.5693 16 12.017 15.5523 12.017 15V9C12.017 8.44772 11.5693 8 11.017 8H8.017C7.46472 8 7.017 8.44772 7.017 9V12C7.017 12.5523 6.56929 13 6.017 13H5.017V21H6.017Z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 pt-4">
+                                        <p className="text-xl font-bold text-gray-800 leading-relaxed mb-6 break-keep">
+                                            "{review.text}"
+                                        </p>
+                                    </div>
+                                    <div className="pt-6 border-t border-gray-50 mt-auto flex justify-between items-center">
+                                        <span className="text-sm font-bold text-brand-600">{review.author}</span>
+                                        <p className="text-[10px] text-gray-400 font-medium italic">
+                                            * 실제 고객 대화 내용 중 발췌
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const QuoteCalculator = () => {
+            const [width, setWidth] = React.useState('');
+            const [height, setHeight] = React.useState('');
+            const [condition, setCondition] = React.useState(1); // 1: Basic, 1.3: +30%, 1.5: +50%
+            const basePrice = 6000;
+
+            const calculatedPrice = React.useMemo(() => {
+                const w = parseFloat(width);
+                const h = parseFloat(height);
+                if (isNaN(w) || w <= 0 || isNaN(h) || h <= 0) return 0;
+                return Math.floor((w * h) * basePrice * condition);
+            }, [width, height, condition]);
+
+            const formatCurrency = (amount) => {
+                return new Intl.NumberFormat('ko-KR').format(amount);
+            };
+
+            return (
+                <section id="calculator" data-aos="fade-up" className="py-20 bg-brand-50">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <h2 className="text-base text-brand-600 font-semibold tracking-wide uppercase">Estimate</h2>
+                            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                                간편 견적 계산기
+                            </p>
+                            <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+                                유리창의 가로와 세로 길이를 입력하시면 예상 견적을 확인하실 수 있습니다.
+                            </p>
+                        </div>
+
+                        <div className="bg-white rounded-3xl shadow-xl overflow-hidden md:flex">
+                            <div className="p-8 md:w-1/2 bg-white">
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label htmlFor="width" className="block text-sm font-medium text-gray-700 mb-2">
+                                                가로 (m)
+                                            </label>
+                                            <div className="relative rounded-md shadow-sm">
+                                                <input
+                                                    type="number"
+                                                    id="width"
+                                                    className="focus:ring-brand-500 focus:border-brand-500 block w-full pl-3 pr-8 sm:text-lg border-gray-300 rounded-xl py-3"
+                                                    placeholder="예: 3"
+                                                    value={width}
+                                                    onChange={(e) => setWidth(e.target.value)}
+                                                />
+                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                    <span className="text-gray-500">m</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-2">
+                                                세로 (m)
+                                            </label>
+                                            <div className="relative rounded-md shadow-sm">
+                                                <input
+                                                    type="number"
+                                                    id="height"
+                                                    className="focus:ring-brand-500 focus:border-brand-500 block w-full pl-3 pr-8 sm:text-lg border-gray-300 rounded-xl py-3"
+                                                    placeholder="예: 2.5"
+                                                    value={height}
+                                                    onChange={(e) => setHeight(e.target.value)}
+                                                />
+                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                    <span className="text-gray-500">m</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500">* 기본 단가: 1m²당 6,000원 (가로 × 세로)</p>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            오염도 및 작업 난이도
+                                        </label>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center">
+                                                <input
+                                                    id="cond-normal"
+                                                    name="condition"
+                                                    type="radio"
+                                                    className="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300"
+                                                    checked={condition === 1}
+                                                    onChange={() => setCondition(1)}
+                                                />
+                                                <label htmlFor="cond-normal" className="ml-3 block text-sm font-medium text-gray-700">
+                                                    일반 관리 (기본)
+                                                </label>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <input
+                                                    id="cond-dirty"
+                                                    name="condition"
+                                                    type="radio"
+                                                    className="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300"
+                                                    checked={condition === 1.3}
+                                                    onChange={() => setCondition(1.3)}
+                                                />
+                                                <label htmlFor="cond-dirty" className="ml-3 block text-sm font-medium text-gray-700">
+                                                    오염도 높음 (+30%)
+                                                </label>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <input
+                                                    id="cond-heavy"
+                                                    name="condition"
+                                                    type="radio"
+                                                    className="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300"
+                                                    checked={condition === 1.5}
+                                                    onChange={() => setCondition(1.5)}
+                                                />
+                                                <label htmlFor="cond-heavy" className="ml-3 block text-sm font-medium text-gray-700">
+                                                    특수 오염(물때/석회질) 제거 (+50%)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-8 md:w-1/2 bg-brand-600 text-white flex flex-col justify-center items-center text-center">
+                                <h3 className="text-xl font-medium text-brand-100 mb-2">예상 견적 금액</h3>
+                                <div className="text-5xl font-extrabold mb-2 break-all">
+                                    {formatCurrency(calculatedPrice)}
+                                    <span className="text-2xl font-medium ml-1">원</span>
+                                </div>
+                                <p className="text-brand-200 text-sm mt-4">
+                                    * VAT 별도 금액입니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <div className="flex items-start">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-6 w-6 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <h3 className="text-lg font-medium text-gray-900">견적 안내사항</h3>
+                                    <div className="mt-2 text-sm text-gray-600">
+                                        <p>
+                                            위 계산된 금액은 고객님의 이해를 돕기 위한 <strong>가견적(예상 비용)</strong>입니다.<br className="hidden sm:block" />
+                                            정확한 견적은 현장의 층수, 유리창의 내/외부 상태, 작업 난이도(장비 필요 여부) 등을 확인하기 위해<br className="hidden sm:block" />
+                                            <strong>전문가가 직접 현장을 방문한 후 최종 산출</strong>됩니다.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Contact = () => {
+            const [formData, setFormData] = React.useState({
+                businessName: '',
+                name: '',
+                phone: '',
+                address: '',
+                area: '',
+                floor: '',
+                message: ''
+            });
+            const [isSubmitting, setIsSubmitting] = React.useState(false);
+            const [isSuccessModalOpen, setIsSuccessModalOpen] = React.useState(false);
+
+            // [설정] 구글 시트 웹 앱 URL 및 EmailJS 정보
+            const SHEETS_WEB_APP_URL = 'YOUR_GOOGLE_SHEETS_WEB_APP_URL';
+            const EMAILJS_CONFIG = {
+                service_id: 'naver_mail',
+                template_id: 'template_e284gpp',
+                public_key: 'ls9spIe-tj2uDiSrj',
+                admin_email: 'magic1980_7@naver.com' // 알림 수신 이메일
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!formData.name || !formData.phone) {
+                    alert('이름과 연락처를 입력해주세요.');
+                    return;
+                }
+
+                setIsSubmitting(true);
+
+                try {
+                    // 1. Local Storage 저장 (관리자 대시보드 백업용)
+                    LeadStorage.saveLead(formData);
+
+                    // 2. 구글 스프레드시트 실시간 연동 (Apps Script Web App)
+                    if (SHEETS_WEB_APP_URL !== 'YOUR_GOOGLE_SHEETS_WEB_APP_URL') {
+                        await fetch(SHEETS_WEB_APP_URL, {
+                            method: 'POST',
+                            mode: 'no-cors', // CORS 이슈 방지
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData)
+                        });
+                        console.log('Google Sheets Sync: Success');
+                    }
+
+                    // 3. EmailJS 알림 발송
+                    if (window.emailjs) {
+                        try {
+                            const result = await emailjs.send(
+                                EMAILJS_CONFIG.service_id,
+                                EMAILJS_CONFIG.template_id,
+                                {
+                                    business_name: formData.businessName,
+                                    name: formData.name,
+                                    contact: formData.phone,
+                                    location: formData.address,
+                                    area: formData.area + 'm²',
+                                    floors: formData.floor + '층',
+                                    message: formData.message,
+                                    subject: '새로운 견적 신청 알람'
+                                },
+                                EMAILJS_CONFIG.public_key
+                            );
+                            console.log('EmailJS Success:', result.status, result.text);
+                        } catch (emailError) {
+                            console.error('EmailJS Error Detail:', emailError);
+                            // 사용자에게는 에러를 노출하지 않지만, 내부적으로 로깅
+                        }
+                    }
+
+                    // 4. 알림 로그 (디버깅용)
+                    const alarmMessage = `[CLEV 신규 견적]\n상호명: ${formData.businessName}\n성함: ${formData.name}\n연락처: ${formData.phone}\n면적: ${formData.area}m²\n층수: ${formData.floor}층`;
+                    console.log('%c[AUTO-ALARM] ' + alarmMessage, 'color: #3b82f6; font-weight: bold;');
+
+                    setIsSuccessModalOpen(true);
+                    setFormData({ businessName: '', name: '', phone: '', address: '', area: '', floor: '', message: '' });
+                } catch (err) {
+                    console.error('Automation Error:', err);
+                    // 에러가 발생해도 사용자 마감을 최우선으로 하여 성공 모달을 띄움
+                    setIsSuccessModalOpen(true);
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
+
+            return (
+                <section id="contact" data-aos="fade-up" className="py-20 bg-brand-900 text-white">
+                    <SuccessModal isOpen={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} />
+
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+                            <div className="mb-12 lg:mb-0" data-aos="fade-right">
+                                <h2 className="text-3xl font-extrabold sm:text-4xl mb-6">
+                                    깨끗한 뷰(View)를 찾고 계신가요?<br />
+                                    <span className="text-brand-300">클레브가 도와드리겠습니다.</span>
+                                </h2>
+                                <p className="text-lg text-brand-100 mb-8">
+                                    지금 바로 무료 견적을 받아보세요. <br />
+                                    사진을 보내주시면 더 정확한 견적이 가능합니다.
+                                </p>
+                                <div className="space-y-4">
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0 bg-brand-800 p-3 rounded-lg">
+                                            <svg className="w-6 h-6 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                        </div>
+                                        <div className="ml-4">
+                                            <p className="text-sm text-brand-300">대표 번호</p>
+                                            <p className="text-xl font-bold">010-9173-1093</p>
+                                            <p className="text-xs text-brand-200 mt-1 font-medium">(상담 가능 시간: 08:00 ~ 22:00)</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0 bg-brand-800 p-3 rounded-lg">
+                                            <svg className="w-6 h-6 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                        </div>
+                                        <div className="ml-4">
+                                            <p className="text-sm text-brand-300">카카오톡 채널</p>
+                                            <a href="https://pf.kakao.com/_Juxmyn" target="_blank" rel="noopener noreferrer" className="text-xl font-bold hover:text-brand-300 transition-colors">@CLEV_Clean</a>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0 bg-brand-800 p-3 rounded-lg">
+                                            <svg className="w-6 h-6 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                            </svg>
+                                        </div>
+                                        <div className="ml-4">
+                                            <p className="text-sm text-brand-300">인스타그램</p>
+                                            <a href="https://www.instagram.com/clevwin/" target="_blank" rel="noopener noreferrer" className="text-xl font-bold hover:text-brand-300 transition-colors">@clevwin</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-2xl p-8 text-gray-900 shadow-2xl" data-aos="fade-left">
+                                <form className="space-y-4" onSubmit={handleSubmit}>
+                                    <div>
+                                        <label htmlFor="businessName" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">상호명 / 가게이름</label>
+                                        <input
+                                            type="text"
+                                            id="businessName"
+                                            required
+                                            value={formData.businessName}
+                                            onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                                            className="block w-full border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 border p-3 outline-none transition-all"
+                                            placeholder="예: 클레브 카페"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label htmlFor="name" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">성함 / 담당자</label>
+                                            <input
+                                                type="text"
+                                                id="name"
+                                                required
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                className="block w-full border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 border p-3 outline-none transition-all"
+                                                placeholder="홍길동"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="phone" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">연락처</label>
+                                            <input
+                                                type="tel"
+                                                id="phone"
+                                                required
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                className="block w-full border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 border p-3 outline-none transition-all"
+                                                placeholder="010-0000-0000"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label htmlFor="address" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">지역 (구/동)</label>
+                                            <input
+                                                type="text"
+                                                id="address"
+                                                required
+                                                value={formData.address}
+                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                className="block w-full border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 border p-3 outline-none transition-all"
+                                                placeholder="예: 광주 남구 봉선동"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="area" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">면적 (m²)</label>
+                                            <input
+                                                type="number"
+                                                id="area"
+                                                required
+                                                value={formData.area}
+                                                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                                                className="block w-full border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 border p-3 outline-none transition-all"
+                                                placeholder="예: 100"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="floor" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">층수 (보유 층 전체)</label>
+                                        <input
+                                            type="text"
+                                            id="floor"
+                                            required
+                                            value={formData.floor}
+                                            onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                                            className="block w-full border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 border p-3 outline-none transition-all"
+                                            placeholder="예: 1~2층 전체 / 단층 / 지하1층"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="message" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">요청 사항 (선택)</label>
+                                        <textarea
+                                            id="message"
+                                            rows="3"
+                                            value={formData.message}
+                                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                                            className="block w-full border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-500 border p-3 outline-none transition-all"
+                                            placeholder="추가로 궁금하신 내용을 적어주세요."
+                                        ></textarea>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className={`w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white transition-all ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700 active:scale-95'}`}
+                                    >
+                                        {isSubmitting ? '접수 중...' : '무료 견적 신청하기'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Footer = () => {
+            return (
+                <footer className="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8" data-aos="fade-up">
+                            <div>
+                                <img
+                                    src="./assets/logo.png"
+                                    alt="CLEV 로고"
+                                    className="h-8 w-auto mb-4 brightness-0 invert"
+                                />
+                                <p className="text-sm">
+                                    프리미엄 유리창 청소 전문 업체<br />
+                                    <span className="font-slogan text-lg text-gray-500/50">Clear the Blur</span>
+                                    <span className="text-[10px] uppercase tracking-widest text-gray-600 ml-2 italic">흐릿함을 선명하게</span>
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="text-white font-semibold mb-4">Service</h4>
+                                <ul className="space-y-2 text-sm">
+                                    <li><a href="#services" className="hover:text-brand-400">상가/매장 유리 청소 전문</a></li>
+                                    <li><a href="#services" className="hover:text-brand-400">유리창 정기 관리</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="border-t border-gray-800 pt-8 text-sm text-center md:text-left">
+                            <p className="mb-2">&copy; 2025 CLEV Window Cleaning. All rights reserved.</p>
+                            <div className="space-y-1">
+                                <p className="text-gray-400 text-xs font-semibold">유리 청소 전문 클레브</p>
+                                <p className="text-gray-500 text-xs">사업자 등록 번호 : 146-32-01397</p>
+                                <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                                    <p className="text-gray-500 text-xs">
+                                        계좌 번호 : 농협 352-1886-5213-63 (박희강)
+                                        <span className="text-brand-500 ml-1">(현금 영수증 발행 가능)</span>
+                                    </p>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText("352-1886-5213-63");
+                                            alert("계좌번호가 복사되었습니다.");
+                                        }}
+                                        className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-[10px] transition-colors"
+                                    >
+                                        복사
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            );
+        };
+
+        const FloatingNav = () => {
+            const [showMenu, setShowMenu] = React.useState(false);
+            const [showTop, setShowTop] = React.useState(false);
+
+            React.useEffect(() => {
+                const handleScroll = () => {
+                    setShowTop(window.scrollY > 400);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const scrollTo = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+                setShowMenu(false);
+            };
+
+            const scrollTop = () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            return (
+                <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end space-y-3">
+                    {/* Call & Kakao Buttons */}
+                    <div className="flex flex-col space-y-3 mb-1">
+                        <a
+                            href="tel:010-9173-1093" onClick={() => console.log('전화 연결 시도")}')}
+                            className="w-12 h-12 bg-green-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-transparent"
+                            title="전화 문의"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                        </a>
+                        <a
+                            href="https://pf.kakao.com/_Juxmyn/chat"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-12 h-12 bg-[#FEE500] text-[#3c1e1e] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+                            title="카톡 문의"
+                        >
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 3c-4.97 0-9 3.134-9 7 0 2.458 1.636 4.62 4.14 5.922l-.79 2.923c-.05.18.06.34.22.34.08 0 .14-.02.2-.07l3.43-2.274c.58.05 1.18.09 1.8.09 4.97 0 9-3.134 9-7s-4.03-7-9-7z" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    {/* Quick Menu Popover */}
+                    {showMenu && (
+                        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 mb-2 flex flex-col w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            <button onClick={() => scrollTo('services')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                                <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                </svg> 서비스 소개
+                            </button>
+                            <button onClick={() => scrollTo('portfolio')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                                <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg> 포트폴리오
+                            </button>
+                            <button onClick={() => scrollTo('reviews')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                                <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                </svg> 고객 후기
+                            </button>
+                            <button onClick={() => scrollTo('calculator')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                                <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg> 견적 계산기
+                            </button>
+                            <button onClick={() => scrollTo('contact')} className="flex items-center px-4 py-3 bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors text-sm font-bold text-white mt-1 shadow-md">
+                                <svg className="w-5 h-5 mr-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                </svg> 무료 견적 신청
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col space-y-3">
+                        {/* Top Button */}
+                        {showTop && (
+                            <button
+                                onClick={scrollTop}
+                                className="w-12 h-12 bg-white text-gray-600 rounded-full shadow-lg border border-gray-100 flex flex-col items-center justify-center hover:bg-gray-50 transition-all hover:-translate-y-1 active:scale-95"
+                                aria-label="Top"
+                            >
+                                <svg className="w-4 h-4 -mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+                                </svg>
+                                <span className="text-[10px] font-bold">TOP</span>
+                            </button>
+                        )}
+
+                        {/* Quick Menu Toggle */}
+                        <div className="relative group">
+                            {!showMenu && (
+                                <div className="absolute -top-12 right-0 bg-gray-900 text-white text-[10px] py-1 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
+                                    Quick Menu
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setShowMenu(!showMenu)}
+                                className={`w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 ${showMenu ? 'bg-gray-900 rotate-180 scale-90' : 'bg-brand-600 hover:scale-110 active:scale-95'}`}
+                            >
+                                {showMenu ? (
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M11 18h9" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = React.useState('user'); // 'user' or 'admin'
+
+            const toggleAdmin = () => {
+                setView(view === 'user' ? 'admin' : 'user');
+                window.scrollTo({ top: 0 });
+            };
+
+            if (view === 'admin') {
+                return <AdminDashboard onBack={toggleAdmin} />;
+            }
+
+            return (
+                <div className="min-h-screen bg-white">
+                    <Header onLogoClick={toggleAdmin} />
+                    <main>
+                        <Hero />
+                        <BrandStory />
+                        <Services />
+                        <Portfolio />
+                        <CustomerReviews />
+                        <QuoteCalculator />
+                        <Contact />
+                    </main>
+                    <Footer />
+                    <FloatingNav />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
