@@ -837,7 +837,7 @@
                         </div>
 
                         {/* Case Tabs (Bookmarks) */}
-                        <div className="flex justify-center mb-12 gap-2 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                        <div className="flex sm:justify-center mb-12 gap-2 sm:gap-4 overflow-x-auto pb-4 px-4 scrollbar-hide">
                             {comparisons.map((comp) => (
                                 <button
                                     key={comp.id}
@@ -983,25 +983,25 @@
                             <p className="text-gray-500 font-medium">진심을 담은 서비스는 결과로 나타납니다.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                        <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-8 max-w-5xl mx-auto">
                             {reviews.map((review, idx) => (
-                                <div key={idx} className="bg-white p-8 rounded-3xl shadow-xl shadow-brand-500/5 border border-gray-100 flex flex-col h-full relative group hover:-translate-y-2 transition-transform duration-300">
-                                    <div className="absolute top-0 right-8 -translate-y-1/2">
-                                        <div className="bg-brand-600 text-white p-3 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
-                                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <div key={idx} className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl shadow-brand-500/5 border border-gray-100 flex flex-col h-full relative group hover:-translate-y-2 transition-transform duration-300">
+                                    <div className="absolute top-0 right-4 sm:right-8 -translate-y-1/2">
+                                        <div className="bg-brand-600 text-white p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                                            <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                                 <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H16.017C15.4647 8 15.017 8.44772 15.017 9V12C15.017 12.5523 14.5693 13 14.017 13H13.017V21H14.017ZM6.017 21L6.017 18C6.017 16.8954 6.91243 16 8.017 16H11.017C11.5693 16 12.017 15.5523 12.017 15V9C12.017 8.44772 11.5693 8 11.017 8H8.017C7.46472 8 7.017 8.44772 7.017 9V12C7.017 12.5523 6.56929 13 6.017 13H5.017V21H6.017Z" />
                                             </svg>
                                         </div>
                                     </div>
-                                    <div className="flex-1 pt-4">
-                                        <p className="text-xl font-bold text-gray-800 leading-relaxed mb-6 break-keep">
+                                    <div className="flex-1 pt-2 sm:pt-4">
+                                        <p className="text-sm sm:text-lg lg:text-xl font-bold text-gray-800 leading-relaxed mb-3 sm:mb-6 break-keep">
                                             "{review.text}"
                                         </p>
                                     </div>
-                                    <div className="pt-6 border-t border-gray-50 mt-auto flex justify-between items-center">
-                                        <span className="text-sm font-bold text-brand-600">{review.author}</span>
-                                        <p className="text-[10px] text-gray-400 font-medium italic">
-                                            * 실제 고객 대화 내용 중 발췌
+                                    <div className="pt-3 sm:pt-6 border-t border-gray-50 mt-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-0">
+                                        <span className="text-[10px] sm:text-sm font-bold text-brand-600">{review.author}</span>
+                                        <p className="text-[8px] sm:text-[10px] text-gray-400 font-medium italic">
+                                            * 실제 고객 대화 중 발췌
                                         </p>
                                     </div>
                                 </div>
@@ -1278,7 +1278,7 @@
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm text-brand-300">대표 번호</p>
-                                            <p className="text-xl font-bold">010-9173-1093</p>
+                                            <a href="tel:010-9173-1093" className="text-xl font-bold hover:text-brand-300 transition-colors">010-9173-1093</a>
                                             <p className="text-xs text-brand-200 mt-1 font-medium">(상담 가능 시간: 08:00 ~ 22:00)</p>
                                         </div>
                                     </div>
@@ -1494,7 +1494,7 @@
                     {/* Call & Kakao Buttons */}
                     <div className="flex flex-col space-y-3 mb-1">
                         <a
-                            href="tel:010-9173-1093" onClick={() => console.log('전화 연결 시도')}
+                            href="tel:010-9173-1093"
                             className="w-13 h-13 sm:w-12 sm:h-12 bg-green-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-white"
                             title="전화 문의"
                         >
@@ -1564,7 +1564,7 @@
                         {/* Quick Menu Toggle */}
                         <div className="relative group">
                             {!showMenu && (
-                                <div className="absolute -top-12 right-0 bg-gray-900 text-white text-[10px] py-1 px-3 rounded-full opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
+                                <div className="absolute -top-12 right-0 bg-gray-900 text-white text-[10px] py-1 px-3 rounded-full opacity-0 sm:group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl hidden sm:block">
                                     Quick Menu
                                 </div>
                             )}
