@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="naver-site-verification" content="f15dcb4d46c48e50fda82e1889baccb859b03cc7" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>CLEV - 프리미엄 유리창 청소</title>
     <!-- Fonts -->
     <link rel="stylesheet" as="style" crossorigin
@@ -45,8 +45,43 @@
     <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+            scroll-behavior: auto !important;
+        }
+
+        /* 앵커 점프 원천 차단 */
+        :target {
+            scroll-margin-top: 100px;
+            scroll-behavior: auto !important;
+        }
+
         body {
             font-family: 'Pretendard', sans-serif;
+        }
+
+        @keyframes pulse-soft {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .animate-pulse-soft {
+            animation: pulse-soft 2s infinite ease-in-out;
+        }
+
+        /* 스크롤 시 오프셋 안정화 */
+        section[id] {
+            scroll-margin-top: 80px;
         }
     </style>
     <!-- EmailJS SDK -->
@@ -57,9 +92,56 @@
 
     <script>
             (function () {
-                // 이메일 알림 초기화
                 emailjs.init("ls9spIe-tj2uDiSrj");
             })();
+
+        // [Premium Maestro Scroll Engine v4]
+        window.scrollEngineActive = false;
+        window.scrollToSection = function (id) {
+            if (window.scrollEngineActive) return;
+
+            var target = (id === 'top' || id === 'home') ? document.body : document.getElementById(id);
+            if (!target) return;
+
+            window.scrollEngineActive = true;
+            var headerHeight = 84;
+            var startPos = window.pageYOffset || window.scrollY || document.documentElement.scrollTop;
+            var targetPos = (id === 'top' || id === 'home') ? 0 : target.getBoundingClientRect().top + startPos - headerHeight;
+            var distance = targetPos - startPos;
+
+            if (Math.abs(distance) < 2) {
+                window.scrollEngineActive = false;
+                return;
+            }
+
+            var duration = 1200; // 1.2초 (부드럽고 안정적인 속도)
+            var startTime = null;
+
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+
+            function animation(currentTime) {
+                if (startTime === null) startTime = currentTime;
+                var timeElapsed = currentTime - startTime;
+                var progress = Math.min(timeElapsed / duration, 1);
+                var run = easeInOutCubic(progress);
+
+                window.scrollTo(0, startPos + (distance * run));
+
+                if (timeElapsed < duration) {
+                    requestAnimationFrame(animation);
+                } else {
+                    window.scrollTo(0, targetPos);
+                    setTimeout(function () {
+                        window.scrollEngineActive = false;
+                    }, 50);
+                }
+            }
+            requestAnimationFrame(animation);
+        };
+
+        window.addEventListener('hashchange', function (e) { e.preventDefault(); }, false);
     </script>
 </head>
 
@@ -104,6 +186,12 @@
             </svg>
         );
 
+    </script>
+
+
+
+    <script type="text/babel">
+
         // Lead Storage Utility
         const LeadStorage = {
             SAVE_KEY: 'clev_leads_data',
@@ -132,6 +220,11 @@
                 const leads = LeadStorage.getLeads();
                 const updated = leads.map(l => l.id === id ? { ...l, status } : l);
                 localStorage.setItem(LeadStorage.SAVE_KEY, JSON.stringify(updated));
+            },
+            deleteMultipleLeads: (ids) => {
+                const leads = LeadStorage.getLeads();
+                const filtered = leads.filter(l => !ids.includes(l.id));
+                localStorage.setItem(LeadStorage.SAVE_KEY, JSON.stringify(filtered));
             }
         };
 
@@ -161,12 +254,37 @@
 
         const AdminDashboard = ({ onBack }) => {
             const [leads, setLeads] = React.useState(LeadStorage.getLeads());
+            const [selectedIds, setSelectedIds] = React.useState([]);
 
             const handleDelete = (id) => {
                 if (confirm('정말 삭제하시겠습니까?')) {
                     LeadStorage.deleteLead(id);
                     setLeads(LeadStorage.getLeads());
+                    setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
                 }
+            };
+
+            const handleBatchDelete = () => {
+                if (selectedIds.length === 0) return;
+                if (confirm(`선택한 ${selectedIds.length}건의 내역을 정말 삭제하시겠습니까?`)) {
+                    LeadStorage.deleteMultipleLeads(selectedIds);
+                    setLeads(LeadStorage.getLeads());
+                    setSelectedIds([]);
+                }
+            };
+
+            const handleSelectAll = (e) => {
+                if (e.target.checked) {
+                    setSelectedIds(leads.map(l => l.id));
+                } else {
+                    setSelectedIds([]);
+                }
+            };
+
+            const handleSelectOne = (id) => {
+                setSelectedIds(prev =>
+                    prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+                );
             };
 
             const handleStatusChange = (id, status) => {
@@ -182,12 +300,22 @@
                                 <h1 className="text-3xl font-black text-gray-900">CLEV 관리자 모드</h1>
                                 <p className="text-gray-500">총 {leads.length}건의 견적 신청이 있습니다.</p>
                             </div>
-                            <button
-                                onClick={onBack}
-                                className="px-6 py-2 bg-gray-900 text-white rounded-full font-bold hover:bg-gray-800"
-                            >
-                                사이트로 복귀
-                            </button>
+                            <div className="flex items-center gap-4">
+                                {selectedIds.length > 0 && (
+                                    <button
+                                        onClick={handleBatchDelete}
+                                        className="px-6 py-2 bg-red-500 text-white rounded-full font-bold hover:bg-red-600 transition-colors shadow-lg animate-in fade-in zoom-in duration-200"
+                                    >
+                                        선택 삭제 ({selectedIds.length})
+                                    </button>
+                                )}
+                                <button
+                                    onClick={onBack}
+                                    className="px-6 py-2 bg-gray-900 text-white rounded-full font-bold hover:bg-gray-800 transition-colors"
+                                >
+                                    사이트로 복귀
+                                </button>
+                            </div>
                         </div>
 
                         <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
@@ -196,6 +324,14 @@
                                     <thead>
                                         <tr className="bg-gray-50 border-b border-gray-100">
                                             <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">날짜</th>
+                                            <th className="px-6 py-4 w-10 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    onChange={handleSelectAll}
+                                                    checked={leads.length > 0 && selectedIds.length === leads.length}
+                                                    className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                                />
+                                            </th>
                                             <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">성함</th>
                                             <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">연락처</th>
                                             <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">문의내용</th>
@@ -206,12 +342,20 @@
                                     <tbody className="divide-y divide-gray-50">
                                         {leads.length === 0 ? (
                                             <tr>
-                                                <td colSpan="6" className="px-6 py-20 text-center text-gray-400">접수된 내역이 없습니다.</td>
+                                                <td colSpan="7" className="px-6 py-20 text-center text-gray-400">접수된 내역이 없습니다.</td>
                                             </tr>
                                         ) : (
                                             leads.map(lead => (
-                                                <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
+                                                <tr key={lead.id} className={`hover:bg-gray-50/50 transition-colors ${selectedIds.includes(lead.id) ? 'bg-brand-50' : ''}`}>
                                                     <td className="px-6 py-4 text-sm text-gray-500">{lead.date}</td>
+                                                    <td className="px-6 py-4 w-10 text-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedIds.includes(lead.id)}
+                                                            onChange={() => handleSelectOne(lead.id)}
+                                                            className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                                        />
+                                                    </td>
                                                     <td className="px-6 py-4 text-sm font-bold text-gray-900">{lead.name}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-700">{lead.phone}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-600 max-w-md break-all">{lead.message}</td>
@@ -256,27 +400,24 @@
             const [logoClicks, setLogoClicks] = React.useState(0);
 
             React.useEffect(() => {
-                AOS.init({
-                    once: true,
-                    offset: 50,
-                    duration: 800,
-                    easing: 'ease-out-cubic',
-                });
+                // AOS 초기화 (한 번만 실행)
+                if (typeof AOS !== 'undefined') {
+                    AOS.init({
+                        once: true,
+                        offset: 50,
+                        duration: 800,
+                        easing: 'ease-out-cubic',
+                    });
+                }
 
                 const handleScroll = () => {
                     setScrolled(window.scrollY > 20);
                 };
                 window.addEventListener('scroll', handleScroll);
-                return () => window.removeEventListener('scroll', handleScroll);
+                return () => {
+                    window.removeEventListener('scroll', handleScroll);
+                };
             }, []);
-            // ... rest of Header code ... (abbreviated for tool call, will use multi-replace or careful targeting in real scenario. 
-            // Since this is replace_file_content, I need to provide the EXACT content for the range.
-            // I will target specific sections one by one or larger chunks if possible.
-            // Wait, replace_file_content for large file with many edits is risky. 
-            // I will use multi_replace for the attributes injection to be safe and cleaner.)
-
-            // Actually, I'll switch to multi_replace_file_content in the Next Step for the attributes injection.
-            // For now, let's just update the Header to init AOS.
 
             const handleLogoClick = () => {
                 const newClicks = logoClicks + 1;
@@ -285,9 +426,17 @@
                     setLogoClicks(0);
                 } else {
                     setLogoClicks(newClicks);
-                    // Scroll to top on single click
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.scrollToSection('top');
                 }
+            };
+
+            const handleNavLinkClick = (e, id) => {
+                if (e) e.preventDefault();
+                setIsMenuOpen(false);
+                // 모바일 메뉴 닫힘 애니메이션과 충돌 방지를 위해 미세 지연 후 발사
+                setTimeout(() => {
+                    window.scrollToSection(id);
+                }, 10);
             };
 
             return (
@@ -302,18 +451,19 @@
                                 />
                             </div>
                             <div className="hidden md:flex items-center space-x-4">
-                                <a href="#services" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">서비스 소개</a>
-                                <a href="#portfolio" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">포트폴리오</a>
-                                <a href="#reviews" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">고객 후기</a>
-                                <a href="#calculator" className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors white-space-nowrap">견적 계산기</a>
-                                <a href="#contact" className="px-6 py-2 bg-brand-600 text-white rounded-full font-bold hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap border-2 border-brand-600 min-w-[160px] text-center">
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'services')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">서비스 소개</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'portfolio')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">포트폴리오</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'reviews')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">고객 후기</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'calculator')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">견적 계산기</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'contact')} className="px-6 py-2 bg-brand-600 text-white rounded-full font-bold hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap border-2 border-brand-600 min-w-[160px] text-center">
                                     무료 견적 신청하기
                                 </a>
                             </div>
                             <div className="md:hidden flex items-center">
                                 <button
                                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    className="text-gray-600 hover:text-gray-900 focus:outline-none"
+                                    className="text-brand-600 hover:text-brand-700 focus:outline-none p-2 rounded-full bg-brand-50 shadow-sm animate-pulse-soft"
+                                    aria-label="메뉴 열기"
                                 >
                                     <MenuIcon />
                                 </button>
@@ -325,11 +475,11 @@
                     {isMenuOpen && (
                         <div className="md:hidden bg-white border-t border-gray-100 animate-in slide-in-from-top duration-300">
                             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                                <a href="#services" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">서비스 소개</a>
-                                <a href="#portfolio" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">포트폴리오</a>
-                                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">고객 후기</a>
-                                <a href="#calculator" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">견적 계산기</a>
-                                <a href="#contact" onClick={() => setIsMenuOpen(false)} className="block w-full text-left px-3 py-2 rounded-md text-base font-bold bg-brand-50 text-brand-600 hover:bg-brand-100">무료 견적 신청하기</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'services')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">서비스 소개</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'portfolio')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">포트폴리오</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'reviews')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">고객 후기</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'calculator')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">견적 계산기</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'contact')} className="block w-full text-left px-3 py-2 rounded-md text-base font-bold bg-brand-50 text-brand-600 hover:bg-brand-100">무료 견적 신청하기</a>
                             </div>
                             <div className="px-4 py-4 border-t border-gray-100 bg-gray-50">
                                 <p className="text-sm text-gray-600 text-center">
@@ -378,26 +528,26 @@
                                 data-aos="fade-up"
                                 data-aos-delay="600"
                                 data-aos-duration="1000"
-                                class="flex flex-wrap justify-center gap-2 w-full max-w-6xl mx-auto mt-10"
+                                className="flex flex-wrap justify-center gap-2 w-full max-w-6xl mx-auto mt-10"
                             >
 
-                                <a href="#services" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('services'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
                                     서비스 소개
                                 </a>
 
-                                <a href="#portfolio" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('portfolio'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
                                     포트폴리오
                                 </a>
 
-                                <a href="#reviews" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('reviews'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
                                     고객 후기
                                 </a>
 
-                                <a href="#calculator" class="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('calculator'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
                                     견적 계산기
                                 </a>
 
-                                <a href="#contact" class="min-w-[130px] flex items-center justify-center py-4 px-6 bg-[#2563eb] text-white rounded-full text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('contact'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 bg-[#2563eb] text-white rounded-full text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
                                     무료 견적 신청
                                 </a>
                             </div>
@@ -408,7 +558,7 @@
                     <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-50 opacity-50 blur-3xl z-[-1]"></div>
 
                     {/* Scroll Indicator */}
-                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer opacity-50 hover:opacity-100 transition-opacity" onClick={() => document.getElementById('about').scrollIntoView({ behavior: 'smooth' })}>
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer opacity-50 hover:opacity-100 transition-opacity" onClick={() => window.scrollToSection('about')}>
                         <svg className="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                         </svg>
@@ -540,7 +690,7 @@
             ];
 
             return (
-                <section id="about" data-aos="fade-up" className="py-20 bg-white">
+                <section id="services" data-aos="fade-up" className="py-20 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
                             <h2 className="text-base text-brand-600 font-semibold tracking-wide uppercase">Why CLEV?</h2>
@@ -1284,13 +1434,13 @@
                             <div>
                                 <h4 className="text-white font-semibold mb-4">Service</h4>
                                 <ul className="space-y-2 text-sm">
-                                    <li><a href="#services" className="hover:text-brand-400">상가/매장 유리 청소 전문</a></li>
-                                    <li><a href="#services" className="hover:text-brand-400">유리창 정기 관리</a></li>
+                                    <li><a href="javascript:void(0)" onClick={() => window.scrollToSection('services')} className="hover:text-brand-400 font-medium">상가/매장 유리 청소 전문</a></li>
+                                    <li><a href="javascript:void(0)" onClick={() => window.scrollToSection('services')} className="hover:text-brand-400 font-medium">유리창 정기 관리</a></li>
                                 </ul>
                             </div>
                         </div>
                         <div className="border-t border-gray-800 pt-8 text-sm text-center md:text-left">
-                            <p className="mb-2">&copy; 2023 CLEV Window Cleaning. All rights reserved.</p>
+                            <p className="mb-2 font-medium">&copy; 2023 CLEV Window Cleaning. All rights reserved.</p>
                             <div className="space-y-1">
                                 <p className="text-gray-400 text-xs font-semibold">유리 청소 전문 클레브</p>
                                 <p className="text-gray-500 text-xs">사업자 등록 번호 : 146-32-01397</p>
@@ -1328,16 +1478,15 @@
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
 
-            const scrollTo = (id) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                }
+            const handleQuickMenuClick = (id) => {
                 setShowMenu(false);
+                setTimeout(() => {
+                    window.scrollToSection(id);
+                }, 10);
             };
 
             const scrollTop = () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollToSection('top');
             };
 
             return (
@@ -1345,11 +1494,11 @@
                     {/* Call & Kakao Buttons */}
                     <div className="flex flex-col space-y-3 mb-1">
                         <a
-                            href="tel:010-9173-1093" onClick={() => console.log('전화 연결 시도")}')}
-                            className="w-12 h-12 bg-green-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-transparent"
+                            href="tel:010-9173-1093" onClick={() => console.log('전화 연결 시도')}
+                            className="w-13 h-13 sm:w-12 sm:h-12 bg-green-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-white"
                             title="전화 문의"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-7 h-7 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
                         </a>
@@ -1357,10 +1506,10 @@
                             href="https://pf.kakao.com/_Juxmyn/chat"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-12 h-12 bg-[#FEE500] text-[#3c1e1e] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+                            className="w-13 h-13 sm:w-12 sm:h-12 bg-[#FEE500] text-[#3c1e1e] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-white"
                             title="카톡 문의"
                         >
-                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-7 h-7 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 3c-4.97 0-9 3.134-9 7 0 2.458 1.636 4.62 4.14 5.922l-.79 2.923c-.05.18.06.34.22.34.08 0 .14-.02.2-.07l3.43-2.274c.58.05 1.18.09 1.8.09 4.97 0 9-3.134 9-7s-4.03-7-9-7z" />
                             </svg>
                         </a>
@@ -1369,27 +1518,27 @@
                     {/* Quick Menu Popover */}
                     {showMenu && (
                         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 mb-2 flex flex-col w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                            <button onClick={() => scrollTo('services')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                            <button onClick={() => handleQuickMenuClick('services')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
                                 <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                                 </svg> 서비스 소개
                             </button>
-                            <button onClick={() => scrollTo('portfolio')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                            <button onClick={() => handleQuickMenuClick('portfolio')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
                                 <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg> 포트폴리오
                             </button>
-                            <button onClick={() => scrollTo('reviews')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                            <button onClick={() => handleQuickMenuClick('reviews')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
                                 <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                                 </svg> 고객 후기
                             </button>
-                            <button onClick={() => scrollTo('calculator')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                            <button onClick={() => handleQuickMenuClick('calculator')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
                                 <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                 </svg> 견적 계산기
                             </button>
-                            <button onClick={() => scrollTo('contact')} className="flex items-center px-4 py-3 bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors text-sm font-bold text-white mt-1 shadow-md">
+                            <button onClick={() => handleQuickMenuClick('contact')} className="flex items-center px-4 py-3 bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors text-sm font-bold text-white mt-1 shadow-md">
                                 <svg className="w-5 h-5 mr-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                                 </svg> 무료 견적 신청
@@ -1401,34 +1550,34 @@
                         {/* Top Button */}
                         {showTop && (
                             <button
-                                onClick={scrollTop}
-                                className="w-12 h-12 bg-white text-gray-600 rounded-full shadow-lg border border-gray-100 flex flex-col items-center justify-center hover:bg-gray-50 transition-all hover:-translate-y-1 active:scale-95"
+                                onClick={() => window.scrollToSection('top')}
+                                className="w-13 h-13 sm:w-12 sm:h-12 bg-white text-brand-600 rounded-full shadow-lg border-2 border-brand-100 flex flex-col items-center justify-center hover:bg-gray-50 transition-all hover:-translate-y-1 active:scale-95 animate-bounce-subtle"
                                 aria-label="Top"
                             >
-                                <svg className="w-4 h-4 -mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+                                <svg className="w-5 h-5 sm:w-4 sm:h-4 -mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7" />
                                 </svg>
-                                <span className="text-[10px] font-bold">TOP</span>
+                                <span className="text-[11px] sm:text-[10px] font-black">TOP</span>
                             </button>
                         )}
 
                         {/* Quick Menu Toggle */}
                         <div className="relative group">
                             {!showMenu && (
-                                <div className="absolute -top-12 right-0 bg-gray-900 text-white text-[10px] py-1 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
+                                <div className="absolute -top-12 right-0 bg-gray-900 text-white text-[10px] py-1 px-3 rounded-full opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
                                     Quick Menu
                                 </div>
                             )}
                             <button
                                 onClick={() => setShowMenu(!showMenu)}
-                                className={`w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 ${showMenu ? 'bg-gray-900 rotate-180 scale-90' : 'bg-brand-600 hover:scale-110 active:scale-95'}`}
+                                className={`w-14 h-14 sm:w-12 sm:h-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 border-2 border-white ${showMenu ? 'bg-gray-900 rotate-180 scale-90' : 'bg-brand-600 hover:scale-110 active:scale-95 animate-pulse-soft'}`}
                             >
                                 {showMenu ? (
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-7 h-7 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 ) : (
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-7 h-7 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M11 18h9" />
                                     </svg>
                                 )}
