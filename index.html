@@ -9,7 +9,8 @@
     <!-- Fonts -->
     <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Great+Vibes&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Great+Vibes&family=Nanum+Pen+Script&display=swap"
         rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -688,6 +689,8 @@
                                 />
                             </div>
                             <div className="hidden md:flex items-center space-x-4">
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'mong-intro')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">몽팀장 소개</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'clev-story')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">클레브 스토리</a>
                                 <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'services')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">서비스 소개</a>
                                 <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'portfolio')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">포트폴리오</a>
                                 <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'reviews')} className="px-5 py-2 text-gray-600 hover:text-brand-600 font-bold transition-colors whitespace-nowrap border-2 border-transparent hover:border-brand-200 rounded-full min-w-[120px] text-center">고객 후기</a>
@@ -735,6 +738,8 @@
                     {isMenuOpen && (
                         <div className="md:hidden bg-white border-t border-gray-100 animate-in slide-in-from-top duration-300">
                             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'mong-intro')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">몽팀장 소개</a>
+                                <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'clev-story')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">클레브 스토리</a>
                                 <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'services')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">서비스 소개</a>
                                 <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'portfolio')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">포트폴리오</a>
                                 <a href="javascript:void(0)" onClick={(e) => handleNavLinkClick(e, 'reviews')} className="block px-3 py-2 rounded-md text-base font-bold text-gray-700 hover:text-brand-600 hover:bg-gray-50">고객 후기</a>
@@ -788,28 +793,36 @@
                                 data-aos="fade-up"
                                 data-aos-delay="600"
                                 data-aos-duration="1000"
-                                className="flex flex-wrap justify-center gap-2 w-full max-w-6xl mx-auto mt-10"
+                                className="flex flex-col gap-2 w-full max-w-6xl mx-auto mt-10 px-4 sm:px-0"
                             >
+                                {/* First Row (4 items) */}
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('mong-intro'); }} className="min-w-[130px] flex-1 sm:flex-none flex items-center justify-center py-3.5 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                        몽팀장 소개
+                                    </a>
+                                    <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('clev-story'); }} className="min-w-[130px] flex-1 sm:flex-none flex items-center justify-center py-3.5 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                        클레브 스토리
+                                    </a>
+                                    <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('services'); }} className="min-w-[130px] flex-1 sm:flex-none flex items-center justify-center py-3.5 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                        서비스 소개
+                                    </a>
+                                    <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('portfolio'); }} className="min-w-[130px] flex-1 sm:flex-none flex items-center justify-center py-3.5 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                        포트폴리오
+                                    </a>
+                                </div>
 
-                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('services'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
-                                    서비스 소개
-                                </a>
-
-                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('portfolio'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
-                                    포트폴리오
-                                </a>
-
-                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('reviews'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
-                                    고객 후기
-                                </a>
-
-                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('calculator'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
-                                    견적 계산기
-                                </a>
-
-                                <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('contact'); }} className="min-w-[130px] flex items-center justify-center py-4 px-6 bg-[#2563eb] text-white rounded-full text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
-                                    무료 견적 신청
-                                </a>
+                                {/* Second Row (3 items) */}
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('reviews'); }} className="min-w-[130px] flex-1 sm:flex-none flex items-center justify-center py-3.5 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                        고객 후기
+                                    </a>
+                                    <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('calculator'); }} className="min-w-[130px] flex-1 sm:flex-none flex items-center justify-center py-3.5 px-6 border border-gray-200 rounded-full text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                                        견적 계산기
+                                    </a>
+                                    <a href="javascript:void(0)" onClick={(e) => { e.preventDefault(); window.scrollToSection('contact'); }} className="min-w-[130px] flex-1 sm:flex-none flex items-center justify-center py-3.5 px-6 bg-[#2563eb] text-white rounded-full text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+                                        무료 견적 신청
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -818,10 +831,192 @@
                     <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-50 opacity-50 blur-3xl z-[-1]"></div>
 
                     {/* Scroll Indicator */}
-                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer opacity-50 hover:opacity-100 transition-opacity" onClick={() => window.scrollToSection('about')}>
-                        <svg className="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer opacity-70 hover:opacity-100 transition-opacity" onClick={() => window.scrollToSection('about')}>
+                        <svg className="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                         </svg>
+                    </div>
+                </section>
+            );
+        };
+
+        const ClevStory = () => {
+            const cards = [
+                {
+                    title: "인연",
+                    subtitle: "3년 만에 다시 찾은 골목, 보답의 진심",
+                    desc: "흐릿해진 사장님의 유리창에 3년 전 선물 받은 소중한 마음을 다시 맑게 되돌려드렸습니다.",
+                    btnText: "인연의 이야기 보기",
+                    link: "https://blog.naver.com/PostView.naver?blogId=toryclean&logNo=224151454618&categoryNo=11&parentCategoryNo=&from=thumbnailList",
+                    image: "./assets/clev_story_inyeon.jpg"
+                },
+                {
+                    title: "철학",
+                    subtitle: "작은 선명함이 만드는 조용한 변화",
+                    desc: "거창한 구호보다 오늘 마주한 유리창 하나를 제대로 닦는 '작은 첫 단추'의 힘을 믿습니다.",
+                    btnText: "브랜드 철학 보기",
+                    link: "https://blog.naver.com/PostView.naver?blogId=toryclean&logNo=224147664833&categoryNo=14&parentCategoryNo=&from=thumbnailList",
+                    image: "./assets/clev_story_philosophy.jpg"
+                },
+                {
+                    title: "가치",
+                    subtitle: "유리 청소도 '최고의 선물'이 될 수 있을까?",
+                    desc: "내 돈 주긴 아깝지만 선물 받으면 가장 기쁜 것. 마음을 전하는 가장 투명하고 특별한 방법입니다.",
+                    btnText: "선물의 가치 보기",
+                    link: "https://blog.naver.com/PostView.naver?blogId=toryclean&logNo=224048965129&categoryNo=14&parentCategoryNo=&from=thumbnailList",
+                    image: "./assets/clev_story_value.png"
+                }
+            ];
+
+            return (
+                <section id="clev-story" className="py-24 bg-[#F9F9F8]">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* Section Header */}
+                        <div className="text-center mb-16" data-aos="fade-up">
+                            <h2 className="text-sm font-bold text-brand-600 tracking-widest uppercase mb-3">CLEV STORY</h2>
+                            <h3 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
+                                우리는 단순한 청소를 넘어<br className="hidden sm:block" />
+                                <span className="relative inline-block">
+                                    마음을 닦습니다
+                                    <span className="absolute bottom-1 left-0 w-full h-3 bg-brand-200/40 -z-10 rounded-sm"></span>
+                                </span>
+                            </h3>
+                        </div>
+
+                        {/* Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {cards.map((card, index) => (
+                                <div
+                                    key={index}
+                                    data-aos="fade-up"
+                                    data-aos-delay={index * 150}
+                                    className="bg-white rounded-[2rem] border border-gray-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-300 group flex flex-col overflow-hidden h-full"
+                                >
+                                    {/* Image Box */}
+                                    <div className="w-full h-64 bg-gray-200 relative overflow-hidden">
+                                        {card.image ? (
+                                            <img src={card.image} alt={card.subtitle} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">
+                                                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-8 flex flex-col flex-grow">
+                                        <div className="mb-6">
+                                            <span className="inline-block px-4 py-1.5 rounded-full bg-brand-50 text-brand-700 text-xs font-bold tracking-wide mb-4">
+                                                {card.title}
+                                            </span>
+                                            <h4 className="text-xl font-bold text-gray-900 leading-snug break-keep min-h-[3.5rem] flex items-center">
+                                                {card.subtitle}
+                                            </h4>
+                                        </div>
+                                        <p className="text-gray-600 leading-relaxed mb-8 text-sm break-keep flex-grow">
+                                            "{card.desc}"
+                                        </p>
+                                        <a
+                                            href={card.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center text-sm font-bold text-gray-900 hover:text-brand-600 transition-colors group-hover:underline decoration-2"
+                                        >
+                                            {card.btnText}
+                                            <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const MongIntro = () => {
+            return (
+                <section id="mong-intro" className="py-24 bg-brand-50/30 overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+                            {/* Image Side */}
+                            <div className="w-full md:w-1/2" data-aos="fade-right">
+                                <div className="relative rounded-[2rem] overflow-hidden shadow-2xl transform transition-transform hover:scale-[1.02] duration-500 border-4 border-white">
+                                    <img
+                                        src="./assets/mong_teamjang_profile.jpg"
+                                        alt="몽팀장 프로필"
+                                        className="w-full h-auto object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+                                </div>
+                            </div>
+
+                            {/* Text Side */}
+                            <div className="w-full md:w-1/2" data-aos="fade-left">
+                                {/* Profile Table */}
+                                <div className="bg-white rounded-2xl shadow-sm border border-brand-100 p-6 mb-10 max-w-md relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-20 h-20 bg-brand-50 rounded-bl-full -mr-10 -mt-10"></div>
+                                    <table className="w-full text-left relative z-10">
+                                        <tbody>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="py-2.5 text-gray-500 font-medium text-sm w-20">성명</th>
+                                                <td className="py-2.5 text-gray-900 font-bold">몽팀장 <span className="text-gray-400 font-normal text-xs ml-1">(Mong)</span></td>
+                                            </tr>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="py-2.5 text-gray-500 font-medium text-sm">직책</th>
+                                                <td className="py-2.5 text-gray-900 font-bold">팀 리더 <span className="text-gray-400 font-normal text-xs ml-1">(Team Leader)</span></td>
+                                            </tr>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="py-2.5 text-gray-500 font-medium text-sm">나이</th>
+                                                <td className="py-2.5 text-gray-900 font-bold">40대 중후반 <span className="text-gray-400 font-normal text-xs ml-1">(원숭이띠)</span></td>
+                                            </tr>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="py-2.5 text-gray-500 font-medium text-sm">신체</th>
+                                                <td className="py-2.5 text-gray-900 font-bold">150cm <span className="text-gray-400 font-normal text-xs ml-1">(2m 조금 안됨)</span> / 몸무게 비밀</td>
+                                            </tr>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="py-2.5 text-gray-500 font-medium text-sm">가족</th>
+                                                <td className="py-2.5 text-gray-900 font-bold">사랑하는 아내와 둘이 거주</td>
+                                            </tr>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="py-2.5 text-gray-500 font-medium text-sm">성향</th>
+                                                <td className="py-2.5 text-brand-600 font-bold">INFP <span className="text-gray-400 font-normal text-xs ml-1">(사색가형)</span></td>
+                                            </tr>
+                                            <tr>
+                                                <th className="py-2.5 text-gray-500 font-medium text-sm">특기</th>
+                                                <td className="py-2.5 text-gray-900 font-bold">운동 <span className="text-gray-400 font-normal text-xs ml-1">(날렵함)</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="space-y-8 text-lg text-gray-600 leading-relaxed break-keep font-light">
+                                    <p>
+                                        안녕하세요, <strong>몽팀장</strong>입니다.<br />
+                                        저는 <strong>원숭이띠인 클레브 대표</strong>의 모습을 투영해 만든 캐릭터입니다. 제 모자에 새겨진 <strong>쌍둥이자리(♊)</strong> 마크는 저와 고객님, 그리고 투명해진 창을 통해 다시 연결될 세상을 의미합니다.
+                                    </p>
+                                    <p>
+                                        저는 말수가 적고 사색을 즐기는 <strong>INFP</strong>입니다. 화려한 언변으로 현혹하기보다, 조용히 머무른 자리에 <strong className="text-brand-700 font-bold">완벽한 선명함</strong>만을 남기는 것을 좋아합니다.
+                                    </p>
+                                    <p>
+                                        유리창 한 장을 닦을 때도, 그 공간에서 하루를 보낼 분들의 기분까지 헤아려보는 것. 그것이 제가 생각하는 <strong className="text-brand-700 font-bold">청소의 본질</strong>입니다.
+                                    </p>
+                                    <p>
+                                        40대 중반, 사랑하는 아내와 가족을 지키는 가장으로서 저는 <strong className="text-brand-700 font-bold">신뢰</strong>라는 단어를 가장 무겁게 생각합니다. 제 이름을 걸고 마주하는 모든 현장은 제 가족이 머물 공간이라고 생각하며 작업합니다.
+                                    </p>
+                                </div>
+
+                                {/* Signature */}
+                                <div className="mt-12 text-right">
+                                    <p className="text-2xl text-gray-800" style={{ fontFamily: "'Nanum Pen Script', cursive" }}>
+                                        클레브 팀 리더 몽팀장 올림
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             );
@@ -833,7 +1028,7 @@
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                         <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
                             <div className="mb-10 lg:mb-0" data-aos="fade-right">
-                                <h2 className="text-base text-brand-600 font-semibold tracking-wide uppercase mb-2">Brand Story</h2>
+                                <h2 className="text-base text-brand-600 font-semibold tracking-wide uppercase mb-2">Our Mission</h2>
                                 <h3 className="text-3xl font-extrabold text-gray-900 sm:text-4xl mb-6 leading-tight break-keep">
                                     누군가에게 <span className="text-brand-600">선물</span>하고 싶은 빛나는 일상,<br />
                                     <span className="text-brand-600">클레브[CLEV]</span>가 만듭니다.
@@ -1778,6 +1973,16 @@
                     {/* Quick Menu Popover */}
                     {showMenu && (
                         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 mb-2 flex flex-col w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            <button onClick={() => handleQuickMenuClick('mong-intro')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                                <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg> 몽팀장 소개
+                            </button>
+                            <button onClick={() => handleQuickMenuClick('clev-story')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
+                                <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg> 클레브 스토리
+                            </button>
                             <button onClick={() => handleQuickMenuClick('services')} className="flex items-center px-4 py-3 hover:bg-brand-50 rounded-xl transition-colors text-sm font-bold text-gray-700">
                                 <svg className="w-5 h-5 mr-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -1872,6 +2077,8 @@
                     <main>
                         <Hero />
                         <BrandStory />
+                        <MongIntro />
+                        <ClevStory />
                         <Services />
                         <Portfolio />
                         <CustomerReviews />
