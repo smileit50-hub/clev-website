@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Crawl-delay: 5
+
+# Specific for Naver Yeti
+User-agent: Yeti
+Allow: /
+
+Sitemap: https://www.clevwindow.com/sitemap.xml
