@@ -303,6 +303,65 @@
             }
         };
 
+        const WorkRecordDB = {
+            getDB: () => new Promise((resolve, reject) => {
+                const req = indexedDB.open('clevWorkRecords', 1);
+                req.onupgradeneeded = e => { e.target.result.createObjectStore('records', { keyPath: 'id', autoIncrement: true }); };
+                req.onsuccess = e => resolve(e.target.result);
+                req.onerror = () => reject(req.error);
+            }),
+            getAll: async () => {
+                const db = await WorkRecordDB.getDB();
+                return new Promise((resolve, reject) => {
+                    const req = db.transaction('records', 'readonly').objectStore('records').getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error);
+                });
+            },
+            add: async (record) => {
+                const db = await WorkRecordDB.getDB();
+                return new Promise((resolve, reject) => {
+                    const req = db.transaction('records', 'readwrite').objectStore('records').add(record);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
+                });
+            },
+            delete: async (id) => {
+                const db = await WorkRecordDB.getDB();
+                return new Promise((resolve, reject) => {
+                    const req = db.transaction('records', 'readwrite').objectStore('records').delete(id);
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => reject(req.error);
+                });
+            },
+            update: async (id, record) => {
+                const db = await WorkRecordDB.getDB();
+                return new Promise((resolve, reject) => {
+                    record.id = id;
+                    const req = db.transaction('records', 'readwrite').objectStore('records').put(record);
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => reject(req.error);
+                });
+            }
+        };
+
+        const resizeImageToDataURL = (file, maxW = 1200) => new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width: w, height: h } = img;
+                    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.82));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
         const SuccessModal = ({ isOpen, onClose }) => {
             if (!isOpen) return null;
             return (
@@ -1260,9 +1319,173 @@
             );
         };
 
-        const Portfolio = () => {
+        const AddRecordModal = ({ onClose, onSaved, editRecord = null }) => {
+            const [title, setTitle] = React.useState(editRecord ? editRecord.title : '');
+            const [date, setDate] = React.useState(editRecord ? editRecord.date : '');
+            const [location, setLocation] = React.useState(editRecord ? editRecord.location : '');
+            const [caption, setCaption] = React.useState(editRecord ? editRecord.caption : '');
+            const [tagInput, setTagInput] = React.useState(editRecord ? editRecord.tags.join(', ') : '');
+            const [saving, setSaving] = React.useState(false);
+            const [phases, setPhases] = React.useState(editRecord ? editRecord.phases.map(p => ({
+                key: p.key, label: p.label, color: p.color, images: p.details || (p.main ? [p.main] : [])
+            })) : [
+                { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', images: [] },
+                { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', images: [] },
+                { key: 'after',  label: '작업 후', color: 'from-emerald-500 to-teal-400', images: [] },
+            ]);
+
+            const handleFileSelect = async (pi, files) => {
+                const processed = await Promise.all(Array.from(files).map(f => resizeImageToDataURL(f)));
+                setPhases(prev => prev.map((p, i) => i === pi ? { ...p, images: [...p.images, ...processed] } : p));
+            };
+            const removeImage = (pi, ii) => {
+                setPhases(prev => prev.map((p, i) => i === pi ? { ...p, images: p.images.filter((_, idx) => idx !== ii) } : p));
+            };
+            const handleSave = async () => {
+                if (!title) { alert('제목을 입력해주세요.'); return; }
+                setSaving(true);
+                try {
+                    const tags = tagInput.split(/[,\s]+/).filter(Boolean);
+                    const record = {
+                        title, date, location, caption, tags, 
+                        createdAt: editRecord ? editRecord.createdAt : Date.now(), 
+                        isUploaded: true,
+                        phases: phases.map(p => ({ key: p.key, label: p.label, color: p.color, main: p.images[0] || '', details: p.images }))
+                    };
+                    if (editRecord) {
+                        await WorkRecordDB.update(editRecord.id, record);
+                    } else {
+                        await WorkRecordDB.add(record);
+                    }
+                    onSaved();
+                    onClose();
+                } finally { setSaving(false); }
+            };
+            return (
+                <div className="fixed inset-0 z-[300] flex items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto py-6 px-4" onClick={onClose}>
+                    <div className="relative bg-white rounded-3xl w-full max-w-2xl shadow-2xl my-4" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <div>
+                                <h3 className="text-xl font-black text-gray-900">{editRecord ? '작업 기록 수정' : '새 작업 기록 추가'}</h3>
+                                <p className="text-sm text-gray-400 mt-0.5">작업 전·중·후 사진과 정보를 입력하세요</p>
+                            </div>
+                            <button onClick={onClose} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all">
+                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-5">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">제목 *</label>
+                                    <input value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 정읍 카페 유리창 청소" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">작업 날짜</label>
+                                    <input type="month" onChange={e => setDate(e.target.value.replace('-', '.'))} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">위치</label>
+                                    <input value={location} onChange={e => setLocation(e.target.value)} placeholder="예: 전북 정읍시" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">작업 설명</label>
+                                    <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={2} placeholder="작업 내용을 간략하게 설명해 주세요" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all resize-none" />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">태그 (쉼표 또는 공백으로 구분)</label>
+                                    <input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="예: 카페, 쇼윈도, 물때제거" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-3">📷 작업 사진 업로드</label>
+                                <div className="space-y-3">
+                                    {phases.map((phase, pi) => (
+                                        <div key={phase.key}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${phase.color}`}>{phase.label}</span>
+                                                <span className="text-xs text-gray-400">{phase.images.length > 0 ? `${phase.images.length}장 선택됨` : '미선택'}</span>
+                                            </div>
+                                            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-3 hover:border-brand-300 hover:bg-brand-50/20 transition-all">
+                                                {phase.images.length === 0 ? (
+                                                    <label className="flex flex-col items-center py-4 text-gray-400 cursor-pointer">
+                                                        <input type="file" multiple accept="image/*" className="hidden" onChange={e => handleFileSelect(pi, e.target.files)} />
+                                                        <svg className="w-8 h-8 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                        <span className="text-sm font-medium">클릭하여 폴더에서 사진 선택</span>
+                                                        <span className="text-xs mt-0.5">여러 장 동시 선택 가능 · JPG, PNG 지원</span>
+                                                    </label>
+                                                ) : (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {phase.images.map((img, ii) => (
+                                                            <div key={ii} className="relative w-20 h-20 rounded-xl overflow-hidden group flex-shrink-0">
+                                                                <img src={img} className="w-full h-full object-cover" alt="" />
+                                                                <button onClick={e => { e.preventDefault(); removeImage(pi, ii); }} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                                </button>
+                                                                {ii === 0 && <span className="absolute top-1 left-1 text-[9px] font-bold bg-brand-500 text-white px-1.5 py-0.5 rounded">대표</span>}
+                                                            </div>
+                                                        ))}
+                                                        <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-brand-300 transition-all flex-shrink-0">
+                                                            <input type="file" multiple accept="image/*" className="hidden" onChange={e => handleFileSelect(pi, e.target.files)} />
+                                                            <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                                                        </label>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-5 border-t border-gray-100 bg-gray-50 rounded-b-3xl">
+                            <button onClick={onClose} className="px-6 py-2.5 rounded-full border border-gray-200 text-sm font-bold text-gray-600 hover:bg-white transition-all">취소</button>
+                            <button onClick={handleSave} disabled={saving || !title} className="px-8 py-2.5 rounded-full bg-brand-600 text-white text-sm font-bold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-brand-200">
+                                {saving ? '저장 중...' : '저장하고 게시'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Portfolio = ({ onRecordSelect, currentPage, setCurrentPage }) => {
             const [sliderPos, setSliderPos] = React.useState(50);
             const [activeTab, setActiveTab] = React.useState(0);
+
+            const [uploadedRecords, setUploadedRecords] = React.useState([]);
+            const [showUploadModal, setShowUploadModal] = React.useState(false);
+
+            const sortRecords = (records) => {
+                return records.sort((a, b) => {
+                    const dateA = a.date || '';
+                    const dateB = b.date || '';
+                    if (dateA !== dateB) return dateB.localeCompare(dateA);
+                    return (b.createdAt || 0) - (a.createdAt || 0);
+                });
+            };
+
+            React.useEffect(() => {
+                const load = () => {
+                    WorkRecordDB.getAll().then(records => {
+                        setUploadedRecords(sortRecords(records));
+                    }).catch(console.error);
+                };
+                load();
+                window.addEventListener('portfolio-db-ready', load);
+                return () => window.removeEventListener('portfolio-db-ready', load);
+            }, []);
+
+            const handleRecordSaved = () => {
+                WorkRecordDB.getAll().then(records => {
+                    setUploadedRecords(sortRecords(records));
+                    setCurrentPage(1);
+                });
+            };
+
+            const handleDeleteUploaded = async (id) => {
+                if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+                await WorkRecordDB.delete(id);
+                setUploadedRecords(prev => prev.filter(r => r.id !== id));
+            };
 
             const comparisons = [
                 {
@@ -1290,12 +1513,10 @@
                 }
             ];
 
-            const items = [
-                { id: 1, tag: '공공기관', img: './assets/portfolio_gov.jpg', title: '지자체 의뢰 체육시설 유리 청소' },
-                { id: 2, tag: '금융기관', img: './assets/portfolio_bank.jpg', title: <>지역농협 유리 청소 &<br />ATM기 녹 제거</> },
-                { id: 3, tag: '매장', img: './assets/portfolio_shop.jpg', title: '전주 의류 매장 유리 청소' },
-                { id: 4, tag: '정기관리', img: './assets/portfolio_regular.jpg', title: <>광주광역시 무인 매장 유리창<br />정기 관리</> },
-            ];
+            const RECORDS_PER_PAGE = 3;
+            const allRecords = uploadedRecords;
+            const totalPages = Math.ceil(allRecords.length / RECORDS_PER_PAGE);
+            const currentRecords = allRecords.slice((currentPage - 1) * RECORDS_PER_PAGE, currentPage * RECORDS_PER_PAGE);
 
             return (
                 <section id="portfolio" data-aos="fade-up" className="py-24 bg-white">
@@ -1387,40 +1608,126 @@
                             </div>
                         </div>
 
-                        {/* Recent Work Gallery */}
-                        <div className="mt-20">
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="h-px flex-1 bg-gray-100 text-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        {/* Work Records Blog Gallery */}
+                        <div className="mt-20" id="portfolio-board">
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="h-px flex-1 bg-gray-100"></div>
                                 <span className="text-sm font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">More Records</span>
                                 <div className="h-px flex-1 bg-gray-100"></div>
+                                <button
+                                    onClick={() => setShowUploadModal(true)}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 flex-shrink-0"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
+                                    업로드
+                                </button>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-aos="fade-up" data-aos-delay="200">
-                                {items.map((item) => (
-                                    <div key={item.id} className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-lg group">
-                                        <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-6">
-                                            <span className="bg-brand-500 text-white text-[10px] font-bold px-2 py-1 rounded inline-block mb-2 uppercase tracking-wider">{item.tag}</span>
-                                            <h4 className="text-white font-bold text-lg leading-snug break-keep">{item.title}</h4>
+                            {/* Record Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+                                {currentRecords.length === 0 && (
+                                    <div className="col-span-full text-center py-16 text-gray-400">
+                                        <svg className="w-12 h-12 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <p className="text-sm font-medium">아직 작업 기록이 없습니다.</p>
+                                        <button onClick={() => setShowUploadModal(true)} className="mt-3 text-brand-600 text-xs font-bold hover:underline">첫 번째 기록 업로드하기 →</button>
+                                    </div>
+                                )}
+                                {currentRecords.map((record) => (
+                                    <div 
+                                        key={record.id} 
+                                        className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer" 
+                                        onClick={() => onRecordSelect(record)}
+                                    >
+                                        {/* Representative Image (Top) */}
+                                        <div className="relative w-full aspect-[4/3] flex-shrink-0 overflow-hidden bg-gray-50">
+                                            <img
+                                                src={record.phases.find(p => p.key === 'after')?.main || record.phases[0]?.main || ''}
+                                                alt={record.title}
+                                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                            />
+                                            {/* Hover Overlay */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0 text-white flex flex-col items-center">
+                                                    <div className="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center mb-2 shadow-lg">
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold tracking-widest uppercase">3단계 세부 보기</span>
+                                                </div>
+                                            </div>
+                                            {/* Top badges */}
+                                            <div className="absolute top-3 left-3 z-10 flex gap-1.5 flex-wrap">
+                                                <span className="bg-black/60 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-1 rounded shadow-sm">{record.date}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Content Area (Bottom Caption) */}
+                                        <div className="p-5 flex-1 flex flex-col bg-white">
+                                            <div className="flex-1">
+                                                <h4 className="text-[15px] font-bold text-gray-900 mb-1.5 line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors break-keep">{record.title}</h4>
+                                                <p className="text-xs text-gray-500 leading-relaxed font-medium line-clamp-2 break-keep">{record.caption}</p>
+                                            </div>
+                                            
+                                            <div className="mt-4 pt-3.5 border-t border-gray-50 flex items-center justify-between">
+                                                <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1 relative z-10">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                    {record.location}
+                                                </span>
+                                                <div className="flex items-center gap-2 relative z-10">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteUploaded(record.id); }} 
+                                                        className="text-[10px] font-bold text-red-400 hover:text-red-700 hover:underline px-1"
+                                                    >
+                                                        삭제
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-10">
+                                    <button
+                                        onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); const el = document.getElementById('portfolio-board'); if(el) window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - 100, behavior: 'smooth' }); }}
+                                        disabled={currentPage === 1}
+                                        className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-brand-300 hover:text-brand-600 disabled:opacity-30 transition-all"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                        <button
+                                            key={page}
+                                            onClick={() => { setCurrentPage(page); const el = document.getElementById('portfolio-board'); if(el) window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - 100, behavior: 'smooth' }); }}
+                                            className={`w-10 h-10 rounded-full font-bold text-sm transition-all ${
+                                                currentPage === page
+                                                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-200'
+                                                    : 'border border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600'
+                                            }`}
+                                        >{page}</button>
+                                    ))}
+                                    <button
+                                        onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); const el = document.getElementById('portfolio-board'); if(el) window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - 100, behavior: 'smooth' }); }}
+                                        disabled={currentPage === totalPages}
+                                        className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-brand-300 hover:text-brand-600 disabled:opacity-30 transition-all"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="mt-16 text-center">
-                            <a
-                                href="https://blog.naver.com/toryclean"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-10 py-4 bg-gray-900 text-white text-lg font-bold rounded-full hover:bg-brand-600 hover:shadow-2xl transition-all duration-300 group"
-                            >
-                                클레브의 더 많은 작업 일지 보기
-                                <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                </svg>
-                            </a>
-                        </div>
+                        
+
+
+                        {/* Upload Modal */}
+                        {showUploadModal && (
+                            <AddRecordModal
+                                onClose={() => setShowUploadModal(false)}
+                                onSaved={handleRecordSaved}
+                            />
+                        )}
                     </div>
                 </section>
             );
@@ -2072,13 +2379,162 @@
             );
         };
 
+        const PortfolioDetail = ({ record, onBack, onEdit, onDelete }) => {
+            const [activeIndex, setActiveIndex] = React.useState(0);
+            
+            // 스크롤 상단으로
+            React.useEffect(() => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+            }, []);
+
+            return (
+                <div className="pt-20 pb-16 min-h-screen bg-gray-50/50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* 2-Column Split Layout for Desktop */}
+                        <div className="flex flex-col lg:flex-row gap-12 items-start">
+                            
+                            {/* Left Side: Gallery (60% width on lg) */}
+                            <div className="w-full lg:w-[60%] sticky top-24 animate-fade-in-up">
+                                {/* Main Large Display */}
+                                <div className="relative aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl border-4 border-white mb-6 group ring-1 ring-black/5 hover:scale-[1.01] transition-transform duration-500">
+                                    <img 
+                                        key={activeIndex} 
+                                        src={record.phases[activeIndex].main} 
+                                        className="w-full h-full object-cover animate-fade-in transition-transform duration-1000 group-hover:scale-[1.02]" 
+                                        alt={record.phases[activeIndex].label}
+                                    />
+                                    {/* Phase Overlay Badge */}
+                                    <div className="absolute top-6 left-6">
+                                        <div className={`px-6 py-2 rounded-2xl text-white font-black text-lg shadow-2xl shadow-brand-500/20 bg-gradient-to-r ${record.phases[activeIndex].color}`}>
+                                            {record.phases[activeIndex].label}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Horizontal Thumbnail Grid */}
+                                <div className="grid grid-cols-3 gap-4">
+                                    {record.phases.map((phase, i) => (
+                                        <button 
+                                            key={phase.key}
+                                            onClick={() => setActiveIndex(i)}
+                                            className={`relative group rounded-2xl overflow-hidden transition-all duration-500 aspect-[4/3] ${
+                                                activeIndex === i 
+                                                ? 'ring-4 ring-brand-500 scale-[1.02] shadow-xl' 
+                                                : 'opacity-50 grayscale-[50%] hover:opacity-100 hover:grayscale-0'
+                                            }`}
+                                        >
+                                            <img src={phase.main} className="w-full h-full object-cover" alt={phase.label} />
+                                            <div className={`absolute inset-0 transition-opacity duration-500 ${activeIndex === i ? 'bg-black/0' : 'bg-black/20'}`} />
+                                            <div className="absolute bottom-2 left-0 right-0 text-center px-4">
+                                                <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black tracking-wider shadow-lg ${
+                                                    activeIndex === i ? 'bg-white text-gray-900' : 'bg-black/40 text-white backdrop-blur-md'
+                                                }`}>
+                                                    {phase.label}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Right Side: Info Panel (40% width on lg) */}
+                            <div className="w-full lg:w-[40%] space-y-6 animate-fade-in-up" style={{animationDelay: '150ms'}}>
+                                <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-4 rounded-3xl border border-gray-100 shadow-sm">
+                                    <button 
+                                        onClick={onBack}
+                                        className="inline-flex items-center px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-black rounded-full shadow-lg shadow-brand-500/20 active:scale-95 transition-all group"
+                                    >
+                                        <svg className="w-4 h-4 mr-1.5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                                        목록으로 돌아가기
+                                    </button>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => onEdit(record)}
+                                            className="p-2 bg-white border border-gray-100 text-gray-400 hover:text-brand-600 hover:border-brand-200 hover:shadow-md rounded-xl transition-all"
+                                            title="수정하기"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                if(confirm('이 작업 기록을 완전히 삭제하시겠습니까?')) {
+                                                    onDelete(record.id);
+                                                }
+                                            }}
+                                            className="p-2 bg-white border border-gray-100 text-gray-400 hover:text-red-500 hover:border-red-200 hover:shadow-md rounded-xl transition-all"
+                                            title="삭제하기"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-xl border border-gray-100 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-brand-50 rounded-full -mr-16 -mt-16 opacity-50 blur-3xl group-hover:scale-110 transition-transform duration-700" />
+                                    
+                                    <div className="relative">
+                                        <div className="flex flex-wrap items-center gap-2 mb-6">
+                                            <span className="bg-brand-50 text-brand-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">{record.date}</span>
+                                        </div>
+
+                                        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight tracking-tight mb-6 break-keep">
+                                            {record.title}
+                                        </h1>
+
+                                        <div className="flex items-center text-gray-500 text-sm font-bold bg-gray-50/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-100 mb-8 w-fit">
+                                            <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                            {record.location}
+                                        </div>
+
+                                        <div className="bg-gray-50/50 p-6 rounded-3xl mb-8 border border-gray-100">
+                                            <p className="text-lg text-gray-600 leading-relaxed font-medium break-keep">
+                                                {record.caption}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2 pt-6 border-t border-gray-100">
+                                            {record.tags.map((tag, i) => (
+                                                <span key={i} className="text-xs font-black text-gray-400 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm hover:border-brand-200 hover:text-brand-500 transition-all cursor-default">#{tag}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const App = () => {
             const [view, setView] = React.useState('user'); // 'user' or 'admin'
             const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+            const [selectedRecord, setSelectedRecord] = React.useState(null);
+            const [editingRecord, setEditingRecord] = React.useState(null);
+            const [portfolioPage, setPortfolioPage] = React.useState(1);
 
-            // 방문자 추적 초기화
+            // 방문자 추적 초기화 및 DB 마이그레이션
             React.useEffect(() => {
                 VisitorTracker.trackVisit();
+                if (!localStorage.getItem('portfolio_init_done')) {
+                    const initDB = async () => {
+                        const initialRecords = [
+                            { title: '정읍 카페 인터그리티 유리창 청소', date: '2025.10', location: '전북 정읍시', caption: '카페 외부 유리창 전체의 석회질 물때와 오염을 제거하고, EU 에코 라벨 인증 친환경 세정제로 광택 케어를 완성했습니다.', tags: ['카페', '쇼윈도', '물때제거'], createdAt: Date.now() - 7000, isUploaded: true, phases: [ { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', main: './assets/compare_cafe_before.jpg', details: ['./assets/compare_cafe_before.jpg'] }, { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', main: './assets/cafe_owner_work.jpg', details: ['./assets/cafe_owner_work.jpg'] }, { key: 'after', label: '작업 후', color: 'from-emerald-500 to-teal-400', main: './assets/compare_cafe_after.jpg', details: ['./assets/compare_cafe_after.jpg', './assets/cafe_owner_after.jpg'] } ] },
+                            { title: '정읍 시기동 용우동 유리창 청소', date: '2025.09', location: '전북 정읍시', caption: '식당 외부 유리창 전체를 전문적으로 케어했습니다. 작업 전과 후의 선명한 차이를 확인하실 수 있습니다.', tags: ['식당', '외부유리', '정기관리'], createdAt: Date.now() - 6000, isUploaded: true, phases: [ { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', main: './assets/compare_restaurant_before.jpg', details: ['./assets/compare_restaurant_before.jpg'] }, { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', main: './assets/cafe_owner_work.jpg', details: ['./assets/cafe_owner_work.jpg'] }, { key: 'after', label: '작업 후', color: 'from-emerald-500 to-teal-400', main: './assets/compare_restaurant_after.jpg', details: ['./assets/compare_restaurant_after.jpg'] } ] },
+                            { title: '전주 보니타봉봉 유리창 청소', date: '2025.08', location: '전북 전주시', caption: '의류매장 쇼윈도 유리창의 거미줄과 물때를 완벽하게 제거했습니다. 매장의 첫인상이 한층 깔끔해졌습니다.', tags: ['의류매장', '쇼윈도', '거미줄제거'], createdAt: Date.now() - 5000, isUploaded: true, phases: [ { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', main: './assets/compare_clothes_before.jpg', details: ['./assets/compare_clothes_before.jpg'] }, { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', main: './assets/cafe_owner_work.jpg', details: ['./assets/cafe_owner_work.jpg'] }, { key: 'after', label: '작업 후', color: 'from-emerald-500 to-teal-400', main: './assets/compare_clothes_after.jpg', details: ['./assets/compare_clothes_after.jpg', './assets/portfolio_shop.jpg'] } ] },
+                            { title: '정읍농협 유리창 청소 및 ATM녹 제거', date: '2025.07', location: '전북 정읍시', caption: '지역농협 유리창 청소와 ATM기 녹 제거 작업을 진행했습니다. 금융기관의 깔끔한 외관 관리를 책임졌습니다.', tags: ['금융기관', 'ATM녹제거', '외관관리'], createdAt: Date.now() - 4000, isUploaded: true, phases: [ { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', main: './assets/compare_restaurant_before.jpg', details: ['./assets/compare_restaurant_before.jpg'] }, { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', main: './assets/cafe_owner_work.jpg', details: ['./assets/cafe_owner_work.jpg'] }, { key: 'after', label: '작업 후', color: 'from-emerald-500 to-teal-400', main: './assets/portfolio_bank.jpg', details: ['./assets/portfolio_bank.jpg'] } ] },
+                            { title: '포세이돈 100평 상가 유리창 청소', date: '2025.06', location: '전북 정읍시', caption: '100평 규모의 대형 상가 전체 유리창을 청소했습니다. 넓은 현장에서도 꼼꼼한 디테일링 작업으로 완벽하게 마무리했습니다.', tags: ['대형상가', '100평', '유리청소'], createdAt: Date.now() - 3000, isUploaded: true, phases: [ { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', main: './assets/compare_cafe_before.jpg', details: ['./assets/compare_cafe_before.jpg'] }, { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', main: './assets/cafe_owner_work.jpg', details: ['./assets/cafe_owner_work.jpg'] }, { key: 'after', label: '작업 후', color: 'from-emerald-500 to-teal-400', main: './assets/portfolio_shop.jpg', details: ['./assets/portfolio_shop.jpg'] } ] },
+                            { title: '광주광역시 무인매장 정기관리', date: '2025.05', location: '광주광역시', caption: '광주 무인매장 유리창 정기 관리 시작. 2개월 1회 멤버십으로 항상 깨끗한 매장 상태를 유지해 드리고 있습니다.', tags: ['무인매장', '정기관리', '멤버십'], createdAt: Date.now() - 2000, isUploaded: true, phases: [ { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', main: './assets/compare_restaurant_before.jpg', details: ['./assets/compare_restaurant_before.jpg'] }, { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', main: './assets/cafe_owner_work.jpg', details: ['./assets/cafe_owner_work.jpg'] }, { key: 'after', label: '작업 후', color: 'from-emerald-500 to-teal-400', main: './assets/portfolio_regular.jpg', details: ['./assets/portfolio_regular.jpg'] } ] },
+                            { title: '지자체 의뢰 체육시설 유리창 청소', date: '2025.04', location: '전북 정읍시', caption: '지자체 의뢰로 체육시설 유리창 전체를 청소했습니다. 공공기관의 깨끗한 시설 관리에 클레브가 함께합니다.', tags: ['공공기관', '체육시설', '지자체의뢰'], createdAt: Date.now() - 1000, isUploaded: true, phases: [ { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', main: './assets/compare_cafe_before.jpg', details: ['./assets/compare_cafe_before.jpg'] }, { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', main: './assets/cafe_owner_work.jpg', details: ['./assets/cafe_owner_work.jpg'] }, { key: 'after', label: '작업 후', color: 'from-emerald-500 to-teal-400', main: './assets/portfolio_gov.jpg', details: ['./assets/portfolio_gov.jpg'] } ] }
+                        ];
+                        for (const rc of initialRecords) {
+                            await WorkRecordDB.add(rc);
+                        }
+                        localStorage.setItem('portfolio_init_done', 'true');
+                        window.dispatchEvent(new Event('portfolio-db-ready'));
+                    };
+                    initDB();
+                }
             }, []);
 
             const toggleAdmin = () => {
@@ -2086,10 +2542,63 @@
                 window.scrollTo({ top: 0 });
             };
 
+            const handleEditSaved = async () => {
+                // 수정 후 최신 데이터로 상세 페이지 강제 갱신
+                if (selectedRecord) {
+                    const allRecords = await WorkRecordDB.getAll();
+                    const updated = allRecords.find(r => r.id === selectedRecord.id);
+                    if (updated) setSelectedRecord(updated);
+                }
+            };
+
+            const handleDeleteRecord = async (id) => {
+                await WorkRecordDB.delete(id);
+                handleBackToList(); // 삭제 후 리스트 화면으로 자동 복귀 및 스크롤
+            };
+
+            const handleBackToList = () => {
+                setSelectedRecord(null);
+                setTimeout(() => {
+                    const target = document.getElementById('portfolio-board');
+                    if (target) {
+                        const y = target.getBoundingClientRect().top + window.pageYOffset - 120;
+                        window.scrollTo({ top: y, behavior: 'auto' });
+                    }
+                }, 50);
+            };
+
             if (view === 'admin') {
                 return <AdminDashboard onBack={toggleAdmin} />;
             }
 
+            // 상세 페이지 뷰
+            if (selectedRecord) {
+                return (
+                    <div className="min-h-screen bg-white font-sans text-gray-900 overflow-x-hidden">
+                        <Header onLogoClick={toggleAdmin} onShareClick={() => setIsShareModalOpen(true)} />
+                        <main>
+                            <PortfolioDetail 
+                                record={selectedRecord} 
+                                onBack={handleBackToList} 
+                                onEdit={setEditingRecord}
+                                onDelete={handleDeleteRecord}
+                            />
+                        </main>
+                        <Footer />
+                        <FloatingNav />
+                        <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
+                        {editingRecord && (
+                            <AddRecordModal
+                                editRecord={editingRecord}
+                                onClose={() => setEditingRecord(null)}
+                                onSaved={handleEditSaved}
+                            />
+                        )}
+                    </div>
+                );
+            }
+
+            // 메인 화면
             return (
                 <div className="min-h-screen bg-white">
                     <Header onLogoClick={toggleAdmin} onShareClick={() => setIsShareModalOpen(true)} />
@@ -2099,7 +2608,7 @@
                         <MongIntro />
                         <ClevStory />
                         <Services />
-                        <Portfolio />
+                        <Portfolio onRecordSelect={setSelectedRecord} currentPage={portfolioPage} setCurrentPage={setPortfolioPage} />
                         <CustomerReviews />
                         <QuoteCalculator />
                         <Contact />
