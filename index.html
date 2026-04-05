@@ -1319,6 +1319,54 @@
             );
         };
 
+        const DraggableImage = ({ img, onChange }) => {
+            const [dragging, setDragging] = React.useState(false);
+            const [startPos, setStartPos] = React.useState({x:0, y:0});
+
+            const handlePointerDown = (e) => {
+                setDragging(true);
+                setStartPos({ x: e.clientX, y: e.clientY });
+                e.currentTarget.setPointerCapture(e.pointerId);
+            };
+
+            const handlePointerMove = (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - startPos.x;
+                const dy = e.clientY - startPos.y;
+                let newX = Math.min(100, Math.max(0, img.pos.x - dx * 1.2));
+                let newY = Math.min(100, Math.max(0, img.pos.y - dy * 1.2));
+                
+                onChange({ ...img, pos: { x: newX, y: newY } });
+                setStartPos({ x: e.clientX, y: e.clientY });
+            };
+
+            const handlePointerUp = (e) => {
+                setDragging(false);
+                e.currentTarget.releasePointerCapture(e.pointerId);
+            };
+
+            return (
+                <div 
+                    className="w-full h-full cursor-move active:cursor-grabbing relative group rounded-xl overflow-hidden touch-none"
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
+                >
+                    <img 
+                        src={img.src} 
+                        draggable="false"
+                        className="w-full h-full object-cover pointer-events-none select-none" 
+                        style={{ objectPosition: `${img.pos.x}% ${img.pos.y}%` }}
+                        alt="" 
+                    />
+                    <div className={`absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-2 pointer-events-none transition-opacity ${dragging ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}`}>
+                        <span className="text-[10px] text-white font-bold drop-shadow-md">상하좌우 드래그</span>
+                    </div>
+                </div>
+            );
+        };
+
         const AddRecordModal = ({ onClose, onSaved, editRecord = null }) => {
             const [title, setTitle] = React.useState(editRecord ? editRecord.title : '');
             const [date, setDate] = React.useState(editRecord ? editRecord.date : '');
@@ -1327,7 +1375,8 @@
             const [tagInput, setTagInput] = React.useState(editRecord ? editRecord.tags.join(', ') : '');
             const [saving, setSaving] = React.useState(false);
             const [phases, setPhases] = React.useState(editRecord ? editRecord.phases.map(p => ({
-                key: p.key, label: p.label, color: p.color, images: p.details || (p.main ? [p.main] : [])
+                key: p.key, label: p.label, color: p.color, 
+                images: (p.details || (p.main ? [p.main] : [])).map(d => typeof d === 'string' ? { src: d, pos: {x: 50, y: 50} } : d)
             })) : [
                 { key: 'before', label: '작업 전', color: 'from-rose-500 to-orange-400', images: [] },
                 { key: 'during', label: '작업 중', color: 'from-amber-400 to-yellow-300', images: [] },
@@ -1336,7 +1385,11 @@
 
             const handleFileSelect = async (pi, files) => {
                 const processed = await Promise.all(Array.from(files).map(f => resizeImageToDataURL(f)));
-                setPhases(prev => prev.map((p, i) => i === pi ? { ...p, images: [...p.images, ...processed] } : p));
+                const newImages = processed.map(src => ({ src, pos: {x: 50, y: 50} }));
+                setPhases(prev => prev.map((p, i) => i === pi ? { ...p, images: [...p.images, ...newImages] } : p));
+            };
+            const updateImage = (pi, ii, newImg) => {
+                setPhases(prev => prev.map((p, i) => i === pi ? { ...p, images: p.images.map((img, idx) => idx === ii ? newImg : img) } : p));
             };
             const removeImage = (pi, ii) => {
                 setPhases(prev => prev.map((p, i) => i === pi ? { ...p, images: p.images.filter((_, idx) => idx !== ii) } : p));
@@ -1363,7 +1416,7 @@
             };
             return (
                 <div className="fixed inset-0 z-[300] flex items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto py-6 px-4" onClick={onClose}>
-                    <div className="relative bg-white rounded-3xl w-full max-w-2xl shadow-2xl my-4" onClick={e => e.stopPropagation()}>
+                    <div className="relative bg-white rounded-3xl w-full max-w-4xl shadow-2xl my-4" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between p-6 border-b border-gray-100">
                             <div>
                                 <h3 className="text-xl font-black text-gray-900">{editRecord ? '작업 기록 수정' : '새 작업 기록 추가'}</h3>
@@ -1373,36 +1426,43 @@
                                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
-                        <div className="p-6 space-y-5">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="col-span-2">
+                        <div className="p-6 sm:p-8 space-y-6">
+                            {/* Top: Metadata */}
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                                <div className="sm:col-span-2">
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5">제목 *</label>
                                     <input value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 정읍 카페 유리창 청소" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
                                 </div>
-                                <div>
+                                <div className="sm:col-span-1">
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5">작업 날짜</label>
                                     <input type="month" onChange={e => setDate(e.target.value.replace('-', '.'))} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
                                 </div>
-                                <div>
+                                <div className="sm:col-span-1">
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5">위치</label>
                                     <input value={location} onChange={e => setLocation(e.target.value)} placeholder="예: 전북 정읍시" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
                                 </div>
-                                <div className="col-span-2">
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">작업 설명</label>
-                                    <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={2} placeholder="작업 내용을 간략하게 설명해 주세요" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all resize-none" />
-                                </div>
-                                <div className="col-span-2">
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">태그 (쉼표 또는 공백으로 구분)</label>
-                                    <input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="예: 카페, 쇼윈도, 물때제거" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
-                                </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-3">📷 작업 사진 업로드</label>
+                            
+                            {/* Middle: Photos */}
+                            <div className="pt-2">
+                                <label className="block text-sm font-black text-gray-800 mb-3">📷 작업 사진 업로드 (위치 세부 조정)</label>
                                 <div className="space-y-3">
                                     {phases.map((phase, pi) => (
                                         <div key={phase.key}>
                                             <div className="flex items-center gap-2 mb-2">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${phase.color}`}>{phase.label}</span>
+                                                {(() => {
+                                                    const config = {
+                                                        before: { label: '작업 전', en: 'BEFORE', bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-100' },
+                                                        during: { label: '작업 중', en: 'DURING', bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' },
+                                                        after:  { label: '작업 후', en: 'AFTER', bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' }
+                                                    }[phase.key] || { label: phase.label, en: '', bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-100' };
+                                                    
+                                                    return (
+                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black border ${config.bg} ${config.text} ${config.border} flex items-center gap-1.5 shadow-sm`}>
+                                                            {config.label} <span className="opacity-40 font-medium">/ {config.en}</span>
+                                                        </span>
+                                                    );
+                                                })()}
                                                 <span className="text-xs text-gray-400">{phase.images.length > 0 ? `${phase.images.length}장 선택됨` : '미선택'}</span>
                                             </div>
                                             <div className="border-2 border-dashed border-gray-200 rounded-2xl p-3 hover:border-brand-300 hover:bg-brand-50/20 transition-all">
@@ -1416,12 +1476,12 @@
                                                 ) : (
                                                     <div className="flex flex-wrap gap-2">
                                                         {phase.images.map((img, ii) => (
-                                                            <div key={ii} className="relative w-20 h-20 rounded-xl overflow-hidden group flex-shrink-0">
-                                                                <img src={img} className="w-full h-full object-cover" alt="" />
-                                                                <button onClick={e => { e.preventDefault(); removeImage(pi, ii); }} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                            <div key={ii} className="relative w-48 aspect-[4/3] rounded-xl flex-shrink-0 group shadow-md border border-gray-100">
+                                                                <DraggableImage img={img} onChange={(newImg) => updateImage(pi, ii, newImg)} />
+                                                                <button onClick={e => { e.preventDefault(); removeImage(pi, ii); }} className="absolute z-10 -top-2 -right-2 bg-red-500 rounded-full text-white p-1 opacity-0 group-hover:opacity-100 shadow-md">
+                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                                                                 </button>
-                                                                {ii === 0 && <span className="absolute top-1 left-1 text-[9px] font-bold bg-brand-500 text-white px-1.5 py-0.5 rounded">대표</span>}
+                                                                {ii === 0 && <span className="absolute z-10 bottom-1 left-1 text-[9px] font-bold bg-brand-500 text-white px-1.5 py-0.5 rounded pointer-events-none">대표</span>}
                                                             </div>
                                                         ))}
                                                         <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-brand-300 transition-all flex-shrink-0">
@@ -1435,6 +1495,19 @@
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Bottom: Caption & Tags */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-gray-100">
+                                <div className="sm:col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">작업 설명</label>
+                                    <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={2} placeholder="작업 내용을 간략하게 설명해 주세요" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all resize-none" />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5">태그 (쉼표 또는 공백으로 구분)</label>
+                                    <input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="예: 카페, 쇼윈도, 물때제거" className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" />
+                                </div>
+                            </div>
+
                         </div>
                         <div className="flex items-center justify-between p-5 border-t border-gray-100 bg-gray-50 rounded-b-3xl">
                             <button onClick={onClose} className="px-6 py-2.5 rounded-full border border-gray-200 text-sm font-bold text-gray-600 hover:bg-white transition-all">취소</button>
@@ -1640,11 +1713,11 @@
                                     >
                                         {/* Representative Image (Top) */}
                                         <div className="relative w-full aspect-[4/3] flex-shrink-0 overflow-hidden bg-gray-50">
-                                            <img
-                                                src={record.phases.find(p => p.key === 'after')?.main || record.phases[0]?.main || ''}
-                                                alt={record.title}
-                                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                            />
+                                            {(() => {
+                                                const mainData = record.phases.find(p => p.key === 'after')?.main || record.phases[0]?.main || '';
+                                                const mainObj = typeof mainData === 'string' ? { src: mainData, pos: {x:50,y:50} } : mainData;
+                                                return <img src={mainObj.src} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" style={{ objectPosition: `${mainObj.pos.x}% ${mainObj.pos.y}%` }} alt={record.title} />;
+                                            })()}
                                             {/* Hover Overlay */}
                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
                                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0 text-white flex flex-col items-center">
@@ -2381,64 +2454,111 @@
 
         const PortfolioDetail = ({ record, onBack, onEdit, onDelete }) => {
             const [activeIndex, setActiveIndex] = React.useState(0);
+            const [subImageIndex, setSubImageIndex] = React.useState(0);
             
+            React.useEffect(() => {
+                setSubImageIndex(0);
+            }, [activeIndex]);
+
             // 스크롤 상단으로
             React.useEffect(() => {
                 window.scrollTo({ top: 0, behavior: 'instant' });
             }, []);
 
+            const currentPhase = record.phases[activeIndex];
+            // 배열이 없거나 비어있는 구조, 혹은 기존 문자열 데이터 구버전 호환 처리
+            const images = (currentPhase.details && currentPhase.details.length > 0) 
+                ? currentPhase.details.map(d => typeof d === 'string' ? { src: d, pos: {x: 50, y: 50} } : d) 
+                : (currentPhase.main ? [{ src: currentPhase.main, pos: {x: 50, y: 50} }] : []);
+
+            const handlePrevClick = (e) => {
+                e.stopPropagation();
+                setSubImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+            };
+
+            const handleNextClick = (e) => {
+                e.stopPropagation();
+                setSubImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+            };
+
             return (
                 <div className="pt-20 pb-16 min-h-screen bg-gray-50/50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         {/* 2-Column Split Layout for Desktop */}
-                        <div className="flex flex-col lg:flex-row gap-12 items-start">
+                        <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-stretch">
                             
-                            {/* Left Side: Gallery (60% width on lg) */}
-                            <div className="w-full lg:w-[60%] sticky top-24 animate-fade-in-up">
+                            {/* Left Side: Gallery (65% width on lg) */}
+                            <div className="w-full lg:w-[65%] sticky top-24 animate-fade-in-up lg:self-start">
                                 {/* Main Large Display */}
-                                <div className="relative aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl border-4 border-white mb-6 group ring-1 ring-black/5 hover:scale-[1.01] transition-transform duration-500">
-                                    <img 
-                                        key={activeIndex} 
-                                        src={record.phases[activeIndex].main} 
-                                        className="w-full h-full object-cover animate-fade-in transition-transform duration-1000 group-hover:scale-[1.02]" 
-                                        alt={record.phases[activeIndex].label}
-                                    />
-                                    {/* Phase Overlay Badge */}
-                                    <div className="absolute top-6 left-6">
-                                        <div className={`px-6 py-2 rounded-2xl text-white font-black text-lg shadow-2xl shadow-brand-500/20 bg-gradient-to-r ${record.phases[activeIndex].color}`}>
-                                            {record.phases[activeIndex].label}
-                                        </div>
+                                <div className="relative aspect-[4/3] lg:aspect-auto lg:h-[calc(100vh-16rem)] min-h-[400px] lg:min-h-[600px] w-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl border-4 border-white mb-6 group ring-1 ring-black/5 hover:scale-[1.01] transition-transform duration-500">
+                                    <div 
+                                        className="flex w-full h-full transition-transform duration-500 ease-out"
+                                        style={{ transform: `translateX(-${subImageIndex * 100}%)` }}
+                                    >
+                                        {images.map((img, idx) => (
+                                            <div key={`${activeIndex}-${idx}`} className="w-full h-full flex-shrink-0">
+                                                <img 
+                                                    src={img.src} 
+                                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]" 
+                                                    style={{ objectPosition: `${img.pos.x}% ${img.pos.y}%` }}
+                                                    alt={`${currentPhase.label} - ${idx + 1}`}
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
+                                    {/* Phase Overlay Badge (Glassmorphism) */}
+                                    <div className="absolute top-6 left-6 z-[60] pointer-events-none">
+                                        {(() => {
+                                            const config = {
+                                                before: { label: '작업 전', en: 'BEFORE', accent: 'bg-rose-500' },
+                                                during: { label: '작업 중', en: 'DURING', accent: 'bg-amber-500' },
+                                                after:  { label: '작업 후', en: 'AFTER', accent: 'bg-emerald-500' }
+                                            }[currentPhase.key] || { label: currentPhase.label, en: '', accent: 'bg-brand-500' };
+                                            
+                                            return (
+                                                <div className="relative group/badge">
+                                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-white/30 to-white/10 rounded-2xl blur opacity-75 group-hover/badge:opacity-100 transition duration-1000 group-hover/badge:duration-200"></div>
+                                                    <div className="relative px-5 py-2.5 bg-white/70 backdrop-blur-xl rounded-2xl text-gray-900 border border-white/50 shadow-2xl flex items-center gap-3">
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${config.accent} animate-pulse shadow-[0_0_8px_rgba(0,0,0,0.1)]`}></div>
+                                                        <div className="flex flex-col leading-none">
+                                                            <span className="text-[10px] font-black tracking-widest text-gray-400 mb-0.5">{config.en}</span>
+                                                            <span className="text-sm font-black tracking-tight">{config.label}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* Slider Navigation */}
+                                    {images.length > 1 && (
+                                        <>
+                                            <button 
+                                                onClick={handlePrevClick} 
+                                                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/80 hover:bg-white text-brand-600 rounded-full shadow-lg flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 z-[60] border border-brand-100"
+                                            >
+                                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                                            </button>
+                                            <button 
+                                                onClick={handleNextClick} 
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/80 hover:bg-white text-brand-600 rounded-full shadow-lg flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 z-[60] border border-brand-100"
+                                            >
+                                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+                                            </button>
+
+                                            {/* Photo Counter Indicator */}
+                                            <div className="absolute bottom-6 right-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs font-black shadow-lg border border-white/10 z-[60] tracking-widest flex items-center gap-1.5 pointer-events-none">
+                                                <svg className="w-3.5 h-3.5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                <span>{subImageIndex + 1} <span className="opacity-50">/</span> {images.length}</span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
-                                {/* Horizontal Thumbnail Grid */}
-                                <div className="grid grid-cols-3 gap-4">
-                                    {record.phases.map((phase, i) => (
-                                        <button 
-                                            key={phase.key}
-                                            onClick={() => setActiveIndex(i)}
-                                            className={`relative group rounded-2xl overflow-hidden transition-all duration-500 aspect-[4/3] ${
-                                                activeIndex === i 
-                                                ? 'ring-4 ring-brand-500 scale-[1.02] shadow-xl' 
-                                                : 'opacity-50 grayscale-[50%] hover:opacity-100 hover:grayscale-0'
-                                            }`}
-                                        >
-                                            <img src={phase.main} className="w-full h-full object-cover" alt={phase.label} />
-                                            <div className={`absolute inset-0 transition-opacity duration-500 ${activeIndex === i ? 'bg-black/0' : 'bg-black/20'}`} />
-                                            <div className="absolute bottom-2 left-0 right-0 text-center px-4">
-                                                <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black tracking-wider shadow-lg ${
-                                                    activeIndex === i ? 'bg-white text-gray-900' : 'bg-black/40 text-white backdrop-blur-md'
-                                                }`}>
-                                                    {phase.label}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
                             </div>
 
-                            {/* Right Side: Info Panel (40% width on lg) */}
-                            <div className="w-full lg:w-[40%] space-y-6 animate-fade-in-up" style={{animationDelay: '150ms'}}>
+                            {/* Right Side: Info Panel (flex-1 width on lg) */}
+                            <div className="w-full lg:flex-1 space-y-6 animate-fade-in-up" style={{animationDelay: '150ms'}}>
                                 <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-4 rounded-3xl border border-gray-100 shadow-sm">
                                     <button 
                                         onClick={onBack}
@@ -2469,25 +2589,59 @@
                                     </div>
                                 </div>
 
+                                {/* Phase Navigation (Moved Here) */}
+                                <div className="grid grid-cols-3 gap-4 bg-white/50 backdrop-blur-sm p-4 rounded-3xl border border-gray-100 shadow-sm">
+                                    {record.phases.map((phase, i) => (
+                                        <button 
+                                            key={phase.key}
+                                            onClick={() => setActiveIndex(i)}
+                                            className={`relative group rounded-2xl overflow-hidden transition-all duration-500 aspect-[4/3] ${
+                                                activeIndex === i 
+                                                ? 'ring-4 ring-brand-500 scale-[1.02] shadow-xl' 
+                                                : 'opacity-50 grayscale-[50%] hover:opacity-100 hover:grayscale-0'
+                                            }`}
+                                        >
+                                            {(() => {
+                                                const mainObj = typeof phase.main === 'string' ? { src: phase.main, pos: {x:50,y:50} } : (phase.main || {src:'', pos:{x:50,y:50}});
+                                                return <img src={mainObj.src} className="w-full h-full object-cover" style={{ objectPosition: `${mainObj.pos.x}% ${mainObj.pos.y}%` }} alt={phase.label} />;
+                                            })()}
+                                            <div className="absolute bottom-2 left-0 right-0 text-center px-4">
+                                                <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black tracking-wider shadow-lg transition-all ${
+                                                    activeIndex === i 
+                                                    ? 'bg-white text-gray-900 scale-110' 
+                                                    : 'bg-black/30 text-white/80 backdrop-blur-md'
+                                                }`}>
+                                                    {phase.label}
+                                                </span>
+                                            </div>
+                                            {activeIndex === i && (
+                                                <div className={`absolute top-0 left-0 right-0 h-1 z-20 ${
+                                                    phase.key === 'before' ? 'bg-rose-500' : 
+                                                    phase.key === 'during' ? 'bg-amber-500' : 'bg-emerald-500'
+                                                }`} />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-xl border border-gray-100 relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-brand-50 rounded-full -mr-16 -mt-16 opacity-50 blur-3xl group-hover:scale-110 transition-transform duration-700" />
                                     
                                     <div className="relative">
-                                        <div className="flex flex-wrap items-center gap-2 mb-6">
+                                        <div className="flex flex-wrap items-center gap-3 mb-4">
                                             <span className="bg-brand-50 text-brand-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">{record.date}</span>
+                                            <div className="flex items-center text-gray-400 text-[11px] font-bold">
+                                                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                {record.location}
+                                            </div>
                                         </div>
 
-                                        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight tracking-tight mb-6 break-keep">
+                                        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight tracking-tight mb-8 break-keep">
                                             {record.title}
                                         </h1>
 
-                                        <div className="flex items-center text-gray-500 text-sm font-bold bg-gray-50/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-100 mb-8 w-fit">
-                                            <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                            {record.location}
-                                        </div>
-
-                                        <div className="bg-gray-50/50 p-6 rounded-3xl mb-8 border border-gray-100">
-                                            <p className="text-lg text-gray-600 leading-relaxed font-medium break-keep">
+                                        <div className="bg-gray-50/50 p-6 rounded-3xl mb-8 border border-gray-100 max-h-64 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                                            <p className="text-lg text-gray-600 leading-relaxed font-medium break-keep whitespace-pre-wrap">
                                                 {record.caption}
                                             </p>
                                         </div>
